@@ -10,8 +10,6 @@ setup(name='web_crawler',
       packages=['web'],
       install_dir="~/.local/lib/python3.7/dist-packages/",
       install_requires=[
-          'selenium',
-          'BeautifulSoup4',
-          'pandas'
+          'scrapy'
       ],
       zip_safe=True)
