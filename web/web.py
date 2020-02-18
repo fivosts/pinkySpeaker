@@ -2,9 +2,10 @@
 # -*- coding: utf-8 -*-
 
 import scrapy
+from scrapy.crawler import CrawlerProcess
+import sys
 
-
-class BrickSetSpider(scrapy.Spider):
+class PinkFloydSpider(scrapy.Spider):
     name = 'brick_spider'
     start_urls = ['http://brickset.com/sets/year-2016']
 
@@ -30,3 +31,13 @@ class BrickSetSpider(scrapy.Spider):
                 response.urljoin(next_page),
                 callback=self.parse
             )
+
+if __name__ == "__main__":
+
+    process = CrawlerProcess({
+        'USER_AGENT': 'Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 5.1)'
+    })
+
+    process.crawl(BrickSetSpider)
+    process.start() # the script will block here until the crawling is finished
+    print("Ok")
