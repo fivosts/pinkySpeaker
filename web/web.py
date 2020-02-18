@@ -1,29 +1,32 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from selenium import webdriver
-from BeautifulSoup import BeautifulSoup
-import pandas as pd
+import scrapy
 
 
-driver = webdriver.Chrome("/usr/lib/chromium-browser/chromedriver")
+class BrickSetSpider(scrapy.Spider):
+    name = 'brick_spider'
+    start_urls = ['http://brickset.com/sets/year-2016']
 
-products=[] #List to store name of the product
-prices=[] #List to store price of the product
-ratings=[] #List to store rating of the product
-driver.get("<a href=\"https://www.flipkart.com/laptops/\">https://www.flipkart.com/laptops/</a>~buyback-guarantee-on-laptops-/pr?sid=6bo%2Cb5g&uniq")
+    def parse(self, response):
+        SET_SELECTOR = '.set'
+        for brickset in response.css(SET_SELECTOR):
 
-content = driver.page_source
-soup = BeautifulSoup(content)
-for a in soup.findAll('a',href=True, attrs={'class':'_31qSD5'}):
-    name=a.find('div', attrs={'class':'_3wU53n'})
-    price=a.find('div', attrs={'class':'_1vC4OE _2rQ-NK'})
-    rating=a.find('div', attrs={'class':'hGSR34 _2beYZw'})
-    products.append(name.text)
-    prices.append(price.text)
-    ratings.append(rating.text) 
+            NAME_SELECTOR = 'h1 ::text'
+            PIECES_SELECTOR = './/dl[dt/text() = "Pieces"]/dd/a/text()'
+            MINIFIGS_SELECTOR = './/dl[dt/text() = "Minifigs"]/dd[2]/a/text()'
+            IMAGE_SELECTOR = 'img ::attr(src)'
+            yield {
+                'name': brickset.css(NAME_SELECTOR).extract_first(),
+                'pieces': brickset.xpath(PIECES_SELECTOR).extract_first(),
+                'minifigs': brickset.xpath(MINIFIGS_SELECTOR).extract_first(),
+                'image': brickset.css(IMAGE_SELECTOR).extract_first(),
+            }
 
-
-
-df = pd.DataFrame({'Product Name':products,'Price':prices,'Rating':ratings}) 
-df.to_csv('products.csv', index=False, encoding='utf-8')
+        NEXT_PAGE_SELECTOR = '.next a ::attr(href)'
+        next_page = response.css(NEXT_PAGE_SELECTOR).extract_first()
+        if next_page:
+            yield scrapy.Request(
+                response.urljoin(next_page),
+                callback=self.parse
+            )
