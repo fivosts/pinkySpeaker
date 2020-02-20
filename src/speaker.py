@@ -124,6 +124,27 @@ def set_title_trainset(dataset, word_model):
 
 	return tset
 
+def set_lyric_trainset(dataset, word_model):
+
+	inputs = []
+	outputs = []
+
+	for song in dataset:
+		flat_song = [song['title']] + song['lyrics']
+		flat_song = [" ".join(x) for x in flat_song]
+		flat_song = " ".join(flat_song).split()
+		for i in range(len(flat_song) - 4):
+			inputs.append([word2idx(x, word_model) for x in flat_song[i : i + 4]])
+			outputs.append(word2idx(flat_song[i + 4], word_model))
+
+	lset = {'input': np.zeros([len(inputs), 4], dtype=np.int32), 'output': np.zeros([len(inputs)], dtype=np.int32)}
+
+	lset['input'] = np.asarray(inputs, dtype = np.int32)
+	lset['output'] = np.asarray(outputs, dtype = np.int32)
+
+
+	return lset
+
 def trainWordModel(inp):
 
 	word_model = gensim.models.Word2Vec(inp, size=300, min_count=1, window=4, iter=200)
@@ -231,8 +252,10 @@ def main():
 	word2vecmodel = word_model
 	print(word2vecmodel)
 	title_set = set_title_trainset(data, word_model)
+	lyric_set = set_lyric_trainset(data, word_model)
 
 	assert len(title_set['input']) == len(title_set['output']), "Wrong title set dimensions"
+	assert len(lyric_set['input']) == len(lyric_set['output']), "Wrong lyric set dimensions"
 
 	for i in range(len(title_set['input'])):
 		print("  {}  ->  {}".format("".join(str(title_set['input'][i])), title_set['output'][i]))
@@ -262,21 +285,37 @@ def main():
 	pretrained_weights = word_model.wv.vectors
 	vocab_size, embedding_size = pretrained_weights.shape
 
-	print("Vocab size: {}, embedding size: {}".format(vocab_size, embedding_size))
-	print("Size of title examples: {}".format(len(title_set['input'])))
-	title_model = Sequential()
-	title_model.add(Embedding(input_dim=vocab_size, output_dim=embedding_size, weights=[pretrained_weights]))
-	title_model.add(LSTM(units=2*embedding_size, return_sequences=True))
-	title_model.add(LSTM(units=2*embedding_size))
-	title_model.add(Dense(units=vocab_size))
-	title_model.add(Activation('softmax'))
-	title_model.compile(optimizer='adam', loss='sparse_categorical_crossentropy')
+	# print("Vocab size: {}, embedding size: {}".format(vocab_size, embedding_size))
+	# print("Size of title examples: {}".format(len(title_set['input'])))
+	# title_model = Sequential()
+	# title_model.add(Embedding(input_dim=vocab_size, output_dim=embedding_size, weights=[pretrained_weights]))
+	# title_model.add(LSTM(units=2*embedding_size, return_sequences=True))
+	# title_model.add(LSTM(units=2*embedding_size))
+	# title_model.add(Dense(units=vocab_size))
+	# title_model.add(Activation('softmax'))
+	# title_model.compile(optimizer='adam', loss='sparse_categorical_crossentropy')
 	global model
-	model = title_model
-	title_model.fit(title_set['input'], title_set['output'],
+	# model = title_model
+	# hist = title_model.fit(title_set['input'], title_set['output'],
+	#           batch_size=16,
+	#           epochs=150,
+	#           callbacks=[LambdaCallback(on_epoch_end=on_epoch_end)])
+
+	lyric_model = Sequential()
+	lyric_model.add(Embedding(input_dim=vocab_size, output_dim=embedding_size, weights=[pretrained_weights]))
+	lyric_model.add(LSTM(units=2*embedding_size, return_sequences=True))
+	lyric_model.add(LSTM(units=2*embedding_size))
+	lyric_model.add(Dense(units=vocab_size))
+	lyric_model.add(Activation('softmax'))
+	lyric_model.compile(optimizer='adam', loss='sparse_categorical_crossentropy')
+
+	model = lyric_model
+	l_hist = lyric_model.fit(lyric_set['input'], lyric_set['output'],
 	          batch_size=16,
 	          epochs=150,
 	          callbacks=[LambdaCallback(on_epoch_end=on_epoch_end)])
+
+
 	return
 
 if __name__ == "__main__":
