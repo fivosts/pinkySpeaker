@@ -30,6 +30,10 @@ DATASET_PATH="/home/fivosts/PhD/Code/pinkySpeaker/dataset/"
 # print(type(sentences))
 # print(len(sentences))
 
+# for i in sentences[0:50]:
+# 	print(i)
+# 	print("\n\n\n")
+
 def fetch_data():
 
 	dataset = []
@@ -38,20 +42,42 @@ def fetch_data():
 			song = []
 			for line in f:
 				if line != "\n":
-					result = re.sub(".*?\[(.*?)\]", "", line).lower().replace("\n", " endline").replace(".", "").replace(",", "").replace("-", "").replace("(", "").replace(")", "").replace("?", "").split()
-					if result:
-						song.append(result)
+					sentence = re.sub(".*?\[(.*?)\]", "", line).lower().replace("i'm", "i am")\
+																		.replace("it's", "it is")\
+																		.replace("isn't", "is not")\
+																		.replace("there's", "there is")\
+																		.replace("they've", "they have")\
+																		.replace("\n", " endline")\
+																		.replace("we've", "we have")\
+																		.replace(".", " .")\
+																		.replace(",", " ,")\
+																		.replace("-", "")\
+																		.replace("\"", "")\
+																		.replace("(", "")\
+																		.replace(")", "")\
+																		.replace("?", " ?")\
+																		.replace("!", " !")\
+																		.split()
+					if sentence:
+						song.append(sentence)
 			artist = "_".join(song[0][:-1])
 			title = "_".join(song[1][:-1])
+			song[-1].append("endfile")
 			dataset.append({'artist': song[0], 'title': song[1], 'lyrics': song[2:]})
 
 	return dataset
 
-fetch_data()
+def struct_sentences(dataset):
+
+	sentences = []
+	for song in dataset:
+		sentences += ([song['title']] + song['lyrics'])
+	# print(sentences)
+	return sentences
 
 def trainWordModel(inp):
 
-	word_model = gensim.models.Word2Vec(inp, size=100, min_count=1, window=5, iter=1)
+	word_model = gensim.models.Word2Vec(inp, size=300, min_count=1, window=4, iter=200)
 	pretrained_weights = word_model.wv.vectors
 	vocab_size, emdedding_size = pretrained_weights.shape
 	print(vocab_size)
@@ -59,12 +85,38 @@ def trainWordModel(inp):
 	print(pretrained_weights.shape)
 	print('Result embedding shape:', pretrained_weights.shape)
 	print('Checking similar words:')
-	for word in ['model', 'network', 'train', 'learn']:
+	for word in ['dark', 'side', 'of', 'the', 'moon', 'endline', 'endfile']:
 		most_similar = ', '.join('%s (%.2f)' % (similar, dist) for similar, dist in word_model.wv.most_similar(word)[:8])
 		print('  %s -> %s' % (word, most_similar))
 
+	# token = 'another'
+	# counter = 0
+	# visited = set()
+	# visited.add(token)
+	# sampled_title = [token]
+	# print("  {} -> {}".format(token, ', '.join('%s (%.2f)' % (similar, dist) for similar, dist in word_model.wv.most_similar(token)[:8])))
+	# while (token != 'endline' or token != 'endfile') and counter < 10:
+	# 	token = word_model.wv.most_similar(token)[0][0]
+
+	# 	i = 0
+	# 	nextToken = word_model.wv.most_similar(token)[i][0]
+	# 	while nextToken in visited and i < len(word_model.wv.most_similar(nextToken)) - 1:
+	# 		i += 1
+	# 		nextToken = word_model.wv.most_similar(token)[i][0]
+	# 	token = nextToken
+	# 	visited.add(token)
+
+	# 	counter += 1
+	# 	print("  {} -> {}".format(token, ', '.join('%s (%.2f)' % (similar, dist) for similar, dist in word_model.wv.most_similar(token)[:8])))
+	# 	sampled_title.append(token)
+	# print(" ".join(sampled_title))
+
 	return
 
+data = fetch_data()
+sentences = struct_sentences(data)
+
+trainWordModel(sentences)
 
 
 # def word2idx(word):
