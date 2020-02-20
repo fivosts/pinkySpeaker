@@ -48,9 +48,9 @@ for i, sentence in enumerate(sentences):
   for t, word in enumerate(sentence[:-1]):
     train_x[i, t] = word2idx(word)
   train_y[i] = word2idx(sentence[-1])
-  print("Input-> output:")
-  print(sentence[:-1])
-  print(sentence[-1])
+  # print("Input-> output:")
+  # print(sentence[:-1])
+  # print(sentence[-1])
   ## Input is a sentence without the last word
   ## Target is the last word of the sentence
 exit(1)
