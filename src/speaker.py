@@ -33,6 +33,7 @@ DATASET_PATH="/home/fivosts/PhD/Code/pinkySpeaker/dataset/"
 # for i in sentences[0:50]:
 # 	print(i)
 # 	print("\n\n\n")
+word2vecmodel = None
 
 def fetch_data():
 
@@ -50,10 +51,11 @@ def fetch_data():
 																		.replace("\n", " endline")\
 																		.replace("we've", "we have")\
 																		.replace("wasn't", "was not")\
-																		.replace(".", " .")\
-																		.replace(",", " ,")\
+																		.replace(".", " . ")\
+																		.replace(",", " , ")\
 																		.replace("-", "")\
 																		.replace("\"", "")\
+																		.replace(":", "")
 																		.replace("(", "")\
 																		.replace(")", "")\
 																		.replace("?", " ?")\
@@ -81,21 +83,53 @@ def struct_sentences(dataset):
 	# print(sentences)
 	return sentences, max_len
 
-def set_title_trainset(dataset):
-	tset = {'input': [], 'output': []}
+def set_title_trainset(dataset, word_model):
+	title_length = 0
+	set_length = 0
 	for song in dataset:
+		set_length += len(song['title']) - 1
+		if len(song['title']) > title_length:
+			title_length = len(song['title'])
+
+	print(set_length, title_length)
+	tset = {'input': np.zeros([set_length, title_length], dtype=np.int32), 'output': np.zeros([set_length], dtype=np.int32)}
+
+	index = 0
+	for j, song in enumerate(dataset):
+		## i will go from 0->15
+		## i means: I will add this number of words. 1 word up to len()-1
 		for i in range(len(song['title']) - 1):
-			tset['input'].append(song['title'][0:i+1])
-			tset['output'].append(song['title'][i+1])
+			# print("i: {}".format(i))
+			## k will go from 0->i+1
+			## k means: if i am adding i words, start counting each one with k
+			for k in range(i + 1):
+				# print("k: {}".format(k))
+				# print(song['title'][k])
+				# print(song['title'][k+1])
+				# print(title_length - 1 + (k - i))
+
+				max_index = title_length - 1
+				sentence_size = i
+				current = k
+				# print("Going to insert {} in position: {}".format(song['title'][k], max_index - sentence_size + current))
+
+				tset['input'][index][max_index - sentence_size + current] = word2idx(song['title'][k], word_model)
+				tset['output'][index] = word2idx(song['title'][k+1], word_model)
+			index += 1
+
+	# print("Input array: {}\nOutput array: {}".format(tset['input'], tset['output']))
+	# for i in range(len(tset['input'])):
+	# 	print("Input array: {}\nOutput array: {}".format(tset['input'][i], tset['output'][i]))
+
 	return tset
 
 def trainWordModel(inp):
 
 	word_model = gensim.models.Word2Vec(inp, size=300, min_count=1, window=4, iter=200)
 	pretrained_weights = word_model.wv.vectors
-	vocab_size, emdedding_size = pretrained_weights.shape
+	vocab_size, embedding_size = pretrained_weights.shape
 	print(vocab_size)
-	print(emdedding_size)
+	print(embedding_size)
 	print(pretrained_weights.shape)
 	print('Result embedding shape:', pretrained_weights.shape)
 	print('Checking similar words:')
@@ -127,83 +161,108 @@ def trainWordModel(inp):
 
 	return word_model
 
-def word2idx(word):
+def word2idx(word, word_model):
   return word_model.wv.vocab[word].index
-def idx2word(idx):
+def idx2word(idx, word_model):
   return word_model.wv.index2word[idx]
 
-data = fetch_data()
-sentences, max_sentence_len = struct_sentences(data)
-
-word_model = trainWordModel(sentences)
-tset = set_title_trainset(data)
-
-assert len(tset['input']) == len(tset['output']), "Wrong title set dimensions"
-
-for i in range(len(tset['input'])):
-	print("  {}  ->  {}".format(" ".join(tset['input'][i]), tset['output'][i]))
-
-exit(1)
-print(max_sentence_len)
-
-print('\nPreparing the data for LSTM...')
-train_x = np.zeros([len(sentences), max_sentence_len], dtype=np.int32)
-train_y = np.zeros([len(sentences)], dtype=np.int32)
-for i, sentence in enumerate(sentences):
-	for t, word in enumerate(sentence[:-1]):
-		train_x[i, t] = word2idx(word)
-		train_y[i] = word2idx(sentence[-1])
-# print("Input-> output:")
-# print(sentence[:-1])
-# print(sentence[-1])
-## Input is a sentence without the last word
-## Target is the last word of the sentence
-
-## (7200, 40)
-print('train_x shape:', train_x.shape)
-print('train_y shape:', train_y.shape)
 
 
 
-print('\nTraining LSTM...')
-model = Sequential()
-model.add(Embedding(input_dim=vocab_size, output_dim=emdedding_size, weights=[pretrained_weights]))
-model.add(LSTM(units=emdedding_size))
-model.add(Dense(units=vocab_size))
-model.add(Activation('softmax'))
-model.compile(optimizer='adam', loss='sparse_categorical_crossentropy')
 
-# def sample(preds, temperature=1.0):
-#   if temperature <= 0:
-#     return np.argmax(preds)
-#   preds = np.asarray(preds).astype('float64')
-#   preds = np.log(preds) / temperature
-#   exp_preds = np.exp(preds)
-#   preds = exp_preds / np.sum(exp_preds)
-#   probas = np.random.multinomial(1, preds, 1)
-#   return np.argmax(probas)
 
-# def generate_next(text, num_generated=10):
-#   word_idxs = [word2idx(word) for word in text.lower().split()]
-#   for i in range(num_generated):
-#     prediction = model.predict(x=np.array(word_idxs))
-#     idx = sample(prediction[-1], temperature=0.7)
-#     word_idxs.append(idx)
-#   return ' '.join(idx2word(idx) for idx in word_idxs)
+def sample(preds, temperature=1.0):
+	if temperature <= 0:
+		return np.argmax(preds)
+	preds = np.asarray(preds).astype('float64')
+	preds = np.log(preds) / temperature
+	exp_preds = np.exp(preds)
+	preds = exp_preds / np.sum(exp_preds)
+	probas = np.random.multinomial(1, preds, 1)
+	return np.argmax(probas)
 
-# def on_epoch_end(epoch, _):
-#   print('\nGenerating text after epoch: %d' % epoch)
-#   texts = [
-#     'deep convolutional',
-#     'simple and effective',
-#     'a nonconvex',
-#     'a',
-#   ]
-#   for text in texts:
-#     sample = generate_next(text)
-#     print('%s... -> %s' % (text, sample))
+def generate_next(text, num_generated=10):
+	word_idxs = [word2idx(word, word2vecmodel) for word in text.lower().split()]
+	for i in range(num_generated):
+		prediction = model.predict(x=np.array(word_idxs))
+		idx = sample(prediction[-1], temperature=0.7)
+		word_idxs.append(idx)
+		if idx2word(idx, word2vecmodel) == "endline" or idx2word(idx, word2vecmodel) == "endfile":
+			break
+	return ' '.join(idx2word(idx, word2vecmodel) for idx in word_idxs)
 
-# model.fit(train_x, train_y,
-#           batch_size=128,
-#           epochs=20,
-#           callbacks=[LambdaCallback(on_epoch_end=on_epoch_end)])
+def on_epoch_end(epoch, _):
+	print('\nGenerating text after epoch: %d' % epoch)
+	texts = [
+			'dark',
+			'another',
+			'echoes',
+			'high',
+		]
+	for text in texts:
+		sample = generate_next(text)
+		print('%s... -> %s' % (text, sample))
+	return
+
+model = None
+
+def main():
+	data = fetch_data()
+	sentences, max_sentence_len = struct_sentences(data)
+
+	word_model = trainWordModel(sentences)
+	global word2vecmodel
+	word2vecmodel = word_model
+	print(word2vecmodel)
+	title_set = set_title_trainset(data, word_model)
+
+	assert len(title_set['input']) == len(title_set['output']), "Wrong title set dimensions"
+
+	for i in range(len(title_set['input'])):
+		print("  {}  ->  {}".format("".join(str(title_set['input'][i])), title_set['output'][i]))
+		print(len(title_set['input']))
+
+	print(max_sentence_len)
+
+	print('\nPreparing the data for LSTM...')
+	# train_x = np.zeros([len(sentences), max_sentence_len], dtype=np.int32)
+	# train_y = np.zeros([len(sentences)], dtype=np.int32)
+	# for i, sentence in enumerate(sentences):
+	# 	for t, word in enumerate(sentence[:-1]):
+	# 		train_x[i, t] = word2idx(word)
+	# 		train_y[i] = word2idx(sentence[-1])
+	# print("Input-> output:")
+	# print(sentence[:-1])
+	# print(sentence[-1])
+	## Input is a sentence without the last word
+	## Target is the last word of the sentence
+
+	## (7200, 40)
+	# print('train_x shape:', train_x.shape)
+	# print('train_y shape:', train_y.shape)
+
+	print('\nTraining title LSTM...')
+
+	pretrained_weights = word_model.wv.vectors
+	vocab_size, embedding_size = pretrained_weights.shape
+
+	print("Vocab size: {}, embedding size: {}".format(vocab_size, embedding_size))
+	print("Size of title examples: {}".format(len(title_set['input'])))
+	title_model = Sequential()
+	title_model.add(Embedding(input_dim=vocab_size, output_dim=embedding_size, weights=[pretrained_weights]))
+	title_model.add(LSTM(units=2*embedding_size, return_sequences=True))
+	title_model.add(LSTM(units=2*embedding_size))
+	title_model.add(Dense(units=vocab_size))
+	title_model.add(Activation('softmax'))
+	title_model.compile(optimizer='adam', loss='sparse_categorical_crossentropy')
+	global model
+	model = title_model
+	title_model.fit(title_set['input'], title_set['output'],
+	          batch_size=4,
+	          epochs=100,
+	          callbacks=[LambdaCallback(on_epoch_end=on_epoch_end)])
+	return
+
+if __name__ == "__main__":
+	main()
+	exit(0)

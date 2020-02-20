@@ -53,7 +53,6 @@ for i, sentence in enumerate(sentences):
   # print(sentence[-1])
   ## Input is a sentence without the last word
   ## Target is the last word of the sentence
-exit(1)
 ## (7200, 40)
 print('train_x shape:', train_x.shape)
 print('train_y shape:', train_y.shape)
@@ -96,6 +95,10 @@ def on_epoch_end(epoch, _):
     sample = generate_next(text)
     print('%s... -> %s' % (text, sample))
 
+print(type(train_x))
+print(type(train_x[0]))
+print(len(train_x))
+print(train_x.shape)
 model.fit(train_x, train_y,
           batch_size=128,
           epochs=20,
