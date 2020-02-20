@@ -8,6 +8,7 @@ import gensim
 import string
 import os
 
+from keras import backend as K
 from keras.callbacks import LambdaCallback
 from keras.layers.recurrent import LSTM
 from keras.layers.embeddings import Embedding
@@ -55,7 +56,7 @@ def fetch_data():
 																		.replace(",", " , ")\
 																		.replace("-", "")\
 																		.replace("\"", "")\
-																		.replace(":", "")
+																		.replace(":", "")\
 																		.replace("(", "")\
 																		.replace(")", "")\
 																		.replace("?", " ?")\
@@ -183,21 +184,36 @@ def sample(preds, temperature=1.0):
 
 def generate_next(text, num_generated=10):
 	word_idxs = [word2idx(word, word2vecmodel) for word in text.lower().split()]
+	# print(model.layers[-2])
+	# print(model.layers[-2].weights[1])
+	init_bias = model.layers[-2].weights[1][word2idx("endline", word2vecmodel)]
 	for i in range(num_generated):
 		prediction = model.predict(x=np.array(word_idxs))
+
 		idx = sample(prediction[-1], temperature=0.7)
 		word_idxs.append(idx)
 		if idx2word(idx, word2vecmodel) == "endline" or idx2word(idx, word2vecmodel) == "endfile":
 			break
+		else:
+			# model.layers[-2].weights[1][word2idx("endline", word2vecmodel)] += abs(model.layers[-2].weights[1][word2idx("endline", word2vecmodel)])
+			K.set_value(model.layers[-2].weights[1][word2idx("endline", word2vecmodel)], model.layers[-2].weights[1][word2idx("endline", word2vecmodel)] + 10*abs(model.layers[-2].weights[1][word2idx("endline", word2vecmodel)]))
+	# model.layers[-2].weights[1][word2idx("endline", word2vecmodel)] = init_bias
+	K.set_value(model.layers[-2].weights[1][word2idx("endline", word2vecmodel)], init_bias)
+
 	return ' '.join(idx2word(idx, word2vecmodel) for idx in word_idxs)
 
 def on_epoch_end(epoch, _):
 	print('\nGenerating text after epoch: %d' % epoch)
 	texts = [
 			'dark',
+			'dark side',
 			'another',
 			'echoes',
 			'high',
+			'shine',
+			'on',
+			'have',
+			'comfortably'
 		]
 	for text in texts:
 		sample = generate_next(text)
@@ -258,8 +274,8 @@ def main():
 	global model
 	model = title_model
 	title_model.fit(title_set['input'], title_set['output'],
-	          batch_size=4,
-	          epochs=100,
+	          batch_size=16,
+	          epochs=150,
 	          callbacks=[LambdaCallback(on_epoch_end=on_epoch_end)])
 	return
 
