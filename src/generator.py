@@ -3,8 +3,6 @@
 
 from __future__ import print_function
 
-__author__ = 'maxim'
-
 import numpy as np
 import gensim
 import string
@@ -24,17 +22,18 @@ print('\nPreparing the sentences...')
 max_sentence_len = 40
 with open(path) as file_:
   docs = file_.readlines()
-sentences = [[word for word in doc.lower().translate(None, string.punctuation).split()[:max_sentence_len]] for doc in docs]
-print('Num sentences:', len(sentences))
+sentences = [[word for word in doc.lower().split()[:max_sentence_len]] for doc in docs]
 
-print('\nTraining word2vec...')
-word_model = gensim.models.Word2Vec(sentences, size=100, min_count=1, window=5, iter=100)
-pretrained_weights = word_model.wv.syn0
+word_model = gensim.models.Word2Vec(sentences, size=100, min_count=1, window=5, iter=1)
+pretrained_weights = word_model.wv.vectors
 vocab_size, emdedding_size = pretrained_weights.shape
+print(vocab_size)
+print(emdedding_size)
+print(pretrained_weights.shape)
 print('Result embedding shape:', pretrained_weights.shape)
 print('Checking similar words:')
 for word in ['model', 'network', 'train', 'learn']:
-  most_similar = ', '.join('%s (%.2f)' % (similar, dist) for similar, dist in word_model.most_similar(word)[:8])
+  most_similar = ', '.join('%s (%.2f)' % (similar, dist) for similar, dist in word_model.wv.most_similar(word)[:8])
   print('  %s -> %s' % (word, most_similar))
 
 def word2idx(word):
@@ -49,6 +48,8 @@ for i, sentence in enumerate(sentences):
   for t, word in enumerate(sentence[:-1]):
     train_x[i, t] = word2idx(word)
   train_y[i] = word2idx(sentence[-1])
+
+## (7200, 40)
 print('train_x shape:', train_x.shape)
 print('train_y shape:', train_y.shape)
 
