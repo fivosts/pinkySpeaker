@@ -285,35 +285,35 @@ def main():
 	pretrained_weights = word_model.wv.vectors
 	vocab_size, embedding_size = pretrained_weights.shape
 
-	# print("Vocab size: {}, embedding size: {}".format(vocab_size, embedding_size))
-	# print("Size of title examples: {}".format(len(title_set['input'])))
-	# title_model = Sequential()
-	# title_model.add(Embedding(input_dim=vocab_size, output_dim=embedding_size, weights=[pretrained_weights]))
-	# title_model.add(LSTM(units=2*embedding_size, return_sequences=True))
-	# title_model.add(LSTM(units=2*embedding_size))
-	# title_model.add(Dense(units=vocab_size))
-	# title_model.add(Activation('softmax'))
-	# title_model.compile(optimizer='adam', loss='sparse_categorical_crossentropy')
+	print("Vocab size: {}, embedding size: {}".format(vocab_size, embedding_size))
+	print("Size of title examples: {}".format(len(title_set['input'])))
+	title_model = Sequential()
+	title_model.add(Embedding(input_dim=vocab_size, output_dim=embedding_size, weights=[pretrained_weights]))
+	title_model.add(LSTM(units=2*embedding_size, return_sequences=True))
+	title_model.add(LSTM(units=2*embedding_size))
+	title_model.add(Dense(units=vocab_size))
+	title_model.add(Activation('softmax'))
+	title_model.compile(optimizer='adam', loss='sparse_categorical_crossentropy')
 	global model
-	# model = title_model
-	# hist = title_model.fit(title_set['input'], title_set['output'],
-	#           batch_size=16,
-	#           epochs=150,
-	#           callbacks=[LambdaCallback(on_epoch_end=on_epoch_end)])
-
-	lyric_model = Sequential()
-	lyric_model.add(Embedding(input_dim=vocab_size, output_dim=embedding_size, weights=[pretrained_weights]))
-	lyric_model.add(LSTM(units=2*embedding_size, return_sequences=True))
-	lyric_model.add(LSTM(units=2*embedding_size))
-	lyric_model.add(Dense(units=vocab_size))
-	lyric_model.add(Activation('softmax'))
-	lyric_model.compile(optimizer='adam', loss='sparse_categorical_crossentropy')
-
-	model = lyric_model
-	l_hist = lyric_model.fit(lyric_set['input'], lyric_set['output'],
+	model = title_model
+	hist = title_model.fit(title_set['input'], title_set['output'],
 	          batch_size=16,
 	          epochs=150,
 	          callbacks=[LambdaCallback(on_epoch_end=on_epoch_end)])
+
+	# lyric_model = Sequential()
+	# lyric_model.add(Embedding(input_dim=vocab_size, output_dim=embedding_size, weights=[pretrained_weights]))
+	# lyric_model.add(LSTM(units=2*embedding_size, return_sequences=True))
+	# lyric_model.add(LSTM(units=2*embedding_size))
+	# lyric_model.add(Dense(units=vocab_size))
+	# lyric_model.add(Activation('softmax'))
+	# lyric_model.compile(optimizer='adam', loss='sparse_categorical_crossentropy')
+
+	# model = lyric_model
+	# l_hist = lyric_model.fit(lyric_set['input'], lyric_set['output'],
+	#           batch_size=16,
+	#           epochs=150,
+	#           callbacks=[LambdaCallback(on_epoch_end=on_epoch_end)])
 
 
 	return
