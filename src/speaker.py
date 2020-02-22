@@ -216,9 +216,7 @@ def generate_next(text, num_generated=10):
 		if idx2word(idx, word2vecmodel) == "endline" or idx2word(idx, word2vecmodel) == "endfile":
 			break
 		else:
-			# model.layers[-2].weights[1][word2idx("endline", word2vecmodel)] += abs(model.layers[-2].weights[1][word2idx("endline", word2vecmodel)])
 			K.set_value(model.layers[-2].weights[1][word2idx("endline", word2vecmodel)], model.layers[-2].weights[1][word2idx("endline", word2vecmodel)] + 10*abs(model.layers[-2].weights[1][word2idx("endline", word2vecmodel)]))
-	# model.layers[-2].weights[1][word2idx("endline", word2vecmodel)] = init_bias
 	K.set_value(model.layers[-2].weights[1][word2idx("endline", word2vecmodel)], init_bias)
 
 	return ' '.join(idx2word(idx, word2vecmodel) for idx in word_idxs)
@@ -297,7 +295,7 @@ def main():
 	global model
 	model = title_model
 	hist = title_model.fit(title_set['input'], title_set['output'],
-	          batch_size=16,
+	          batch_size=128,
 	          epochs=150,
 	          callbacks=[LambdaCallback(on_epoch_end=on_epoch_end)])
 
