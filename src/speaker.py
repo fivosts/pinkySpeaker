@@ -225,7 +225,11 @@ def generate_next(text, num_generated=140):
 			if idx2word(idx, word2vecmodel) == "endline":
 				K.set_value(model.layers[-2].weights[1][word2idx("endline", word2vecmodel)], init_endline_bias)
 
-			K.set_value(model.layers[-2].weights[1][word2idx("endline", word2vecmodel)], model.layers[-2].weights[1][word2idx("endline", word2vecmodel)] + 2*abs(model.layers[-2].weights[1][word2idx("endline", word2vecmodel)]))
+			if title == True:
+				b = 2
+			else:
+				b = 0.2
+			K.set_value(model.layers[-2].weights[1][word2idx("endline", word2vecmodel)], model.layers[-2].weights[1][word2idx("endline", word2vecmodel)] + b*abs(model.layers[-2].weights[1][word2idx("endline", word2vecmodel)]))
 			K.set_value(model.layers[-2].weights[1][word2idx("endfile", word2vecmodel)], model.layers[-2].weights[1][word2idx("endfile", word2vecmodel)] + 0.4*abs(model.layers[-2].weights[1][word2idx("endfile", word2vecmodel)]))
 	K.set_value(model.layers[-2].weights[1][word2idx("endline", word2vecmodel)], init_endline_bias)
 	K.set_value(model.layers[-2].weights[1][word2idx("endfile", word2vecmodel)], init_endfile_bias)
@@ -357,10 +361,10 @@ def predict():
 
 	print("TITLE")
 	print(T.replace("endline", "\n"))
-	print(L.replace("endline ", "\n"))
+	print(L.replace("endline ", "\n").replace("endfile", ""))
 
 
 if __name__ == "__main__":
-	main()
-	# predict()
+	# main()
+	predict()
 	exit(0)
