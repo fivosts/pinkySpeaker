@@ -310,8 +310,8 @@ def main():
 	global model
 	model = title_model
 	hist = title_model.fit(title_set['input'], title_set['output'],
-	          batch_size=128,
-	          epochs=4,
+	          batch_size=4,
+	          epochs=30,
 	          callbacks=[LambdaCallback(on_epoch_end=on_epoch_end)])
 
 	title = False
@@ -325,15 +325,12 @@ def main():
 
 	model = lyric_model
 	l_hist = lyric_model.fit(lyric_set['input'], lyric_set['output'],
-	          batch_size=512,
-	          epochs=4,
+	          batch_size=16,
+	          epochs=40,
 	          callbacks=[LambdaCallback(on_epoch_end=on_epoch_end)])
 
 	lyric_model.save("lyric_model.h5")
 	title_model.save("title_model.h5")
-
-	print("OK")
-	# predict()
 
 	return
 
@@ -364,6 +361,6 @@ def predict():
 
 
 if __name__ == "__main__":
-	# main()
-	predict()
+	main()
+	# predict()
 	exit(0)
