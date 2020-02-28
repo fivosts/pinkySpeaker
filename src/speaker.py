@@ -160,6 +160,8 @@ def trainWordModel(inp):
 		most_similar = ', '.join('%s (%.2f)' % (similar, dist) for similar, dist in word_model.wv.most_similar(word)[:8])
 		print('  %s -> %s' % (word, most_similar))
 
+	word_model.save("word2vec.model")
+
 	# token = 'another'
 	# counter = 0
 	# visited = set()
@@ -204,14 +206,14 @@ def sample(preds, temperature=1.0):
 	probas = np.random.multinomial(1, preds, 1)
 	return np.argmax(probas)
 
-def generate_next(text, num_generated=10):
+def generate_next(text, num_generated=140):
 	word_idxs = [word2idx(word, word2vecmodel) for word in text.lower().split()]
 	# print(model.layers[-2])
 	# print(model.layers[-2].weights[1])
 	init_endline_bias = model.layers[-2].weights[1][word2idx("endline", word2vecmodel)]
 	init_endfile_bias = model.layers[-2].weights[1][word2idx("endfile", word2vecmodel)]
-	# for i in range(num_generated):
-	while True:
+	for i in range(num_generated):
+	# while True:
 		prediction = model.predict(x=np.array(word_idxs))
 
 		idx = sample(prediction[-1], temperature=0.7)
@@ -223,8 +225,8 @@ def generate_next(text, num_generated=10):
 			if idx2word(idx, word2vecmodel) == "endline":
 				K.set_value(model.layers[-2].weights[1][word2idx("endline", word2vecmodel)], init_endline_bias)
 
-			K.set_value(model.layers[-2].weights[1][word2idx("endline", word2vecmodel)], model.layers[-2].weights[1][word2idx("endline", word2vecmodel)] + 10*abs(model.layers[-2].weights[1][word2idx("endline", word2vecmodel)]))
-			K.set_value(model.layers[-2].weights[1][word2idx("endfile", word2vecmodel)], model.layers[-2].weights[1][word2idx("endfile", word2vecmodel)] + 0.1*abs(model.layers[-2].weights[1][word2idx("endfile", word2vecmodel)]))
+			K.set_value(model.layers[-2].weights[1][word2idx("endline", word2vecmodel)], model.layers[-2].weights[1][word2idx("endline", word2vecmodel)] + 2*abs(model.layers[-2].weights[1][word2idx("endline", word2vecmodel)]))
+			K.set_value(model.layers[-2].weights[1][word2idx("endfile", word2vecmodel)], model.layers[-2].weights[1][word2idx("endfile", word2vecmodel)] + 0.4*abs(model.layers[-2].weights[1][word2idx("endfile", word2vecmodel)]))
 	K.set_value(model.layers[-2].weights[1][word2idx("endline", word2vecmodel)], init_endline_bias)
 	K.set_value(model.layers[-2].weights[1][word2idx("endfile", word2vecmodel)], init_endfile_bias)
 
@@ -331,7 +333,7 @@ def main():
 	title_model.save("title_model.h5")
 
 	print("OK")
-	predict()
+	# predict()
 
 	return
 
@@ -341,17 +343,27 @@ def predict():
 	title_model = load_model("title_model.h5")
 	lyric_model = load_model("lyric_model.h5")
 
+	global word2vecmodel
+	word2vecmodel = gensim.models.Word2Vec.load("word2vec.model")
+
 	inp = input()
 	global model
+	global title
+	title = True
 	model = title_model
 
-	
+	T = generate_next(inp)
 
+	model = lyric_model
+	title = False
+	L = " ".join(generate_next(T).split()[len(T.split()):])
 
-	print("PRINT")
-	print(lyric_model)
-	print(title_model)
+	print("TITLE")
+	print(T.replace("endline", "\n"))
+	print(L.replace("endline ", "\n"))
+
 
 if __name__ == "__main__":
-	main()
+	# main()
+	predict()
 	exit(0)
