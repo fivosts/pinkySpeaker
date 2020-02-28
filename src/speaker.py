@@ -13,7 +13,7 @@ from keras.callbacks import LambdaCallback
 from keras.layers.recurrent import LSTM
 from keras.layers.embeddings import Embedding
 from keras.layers import Dense, Activation
-from keras.models import Sequential
+from keras.models import Sequential, load_model
 from keras.utils.data_utils import get_file
 import re
 
@@ -35,6 +35,7 @@ DATASET_PATH="/home/fivosts/PhD/Code/pinkySpeaker/dataset/"
 # 	print(i)
 # 	print("\n\n\n")
 word2vecmodel = None
+title = True
 
 def fetch_data():
 
@@ -207,17 +208,25 @@ def generate_next(text, num_generated=10):
 	word_idxs = [word2idx(word, word2vecmodel) for word in text.lower().split()]
 	# print(model.layers[-2])
 	# print(model.layers[-2].weights[1])
-	init_bias = model.layers[-2].weights[1][word2idx("endline", word2vecmodel)]
-	for i in range(num_generated):
+	init_endline_bias = model.layers[-2].weights[1][word2idx("endline", word2vecmodel)]
+	init_endfile_bias = model.layers[-2].weights[1][word2idx("endfile", word2vecmodel)]
+	# for i in range(num_generated):
+	while True:
 		prediction = model.predict(x=np.array(word_idxs))
 
 		idx = sample(prediction[-1], temperature=0.7)
 		word_idxs.append(idx)
-		if idx2word(idx, word2vecmodel) == "endline" or idx2word(idx, word2vecmodel) == "endfile":
+		# if idx2word(idx, word2vecmodel) == "endline" or idx2word(idx, word2vecmodel) == "endfile":
+		if (title == True and (idx2word(idx, word2vecmodel) == "endline" or idx2word(idx, word2vecmodel) == "endfile")) or (title == False and idx2word(idx, word2vecmodel) == "endfile"):
 			break
 		else:
+			if idx2word(idx, word2vecmodel) == "endline":
+				K.set_value(model.layers[-2].weights[1][word2idx("endline", word2vecmodel)], init_endline_bias)
+
 			K.set_value(model.layers[-2].weights[1][word2idx("endline", word2vecmodel)], model.layers[-2].weights[1][word2idx("endline", word2vecmodel)] + 10*abs(model.layers[-2].weights[1][word2idx("endline", word2vecmodel)]))
-	K.set_value(model.layers[-2].weights[1][word2idx("endline", word2vecmodel)], init_bias)
+			K.set_value(model.layers[-2].weights[1][word2idx("endfile", word2vecmodel)], model.layers[-2].weights[1][word2idx("endfile", word2vecmodel)] + 0.1*abs(model.layers[-2].weights[1][word2idx("endfile", word2vecmodel)]))
+	K.set_value(model.layers[-2].weights[1][word2idx("endline", word2vecmodel)], init_endline_bias)
+	K.set_value(model.layers[-2].weights[1][word2idx("endfile", word2vecmodel)], init_endfile_bias)
 
 	return ' '.join(idx2word(idx, word2vecmodel) for idx in word_idxs)
 
@@ -285,6 +294,10 @@ def main():
 
 	print("Vocab size: {}, embedding size: {}".format(vocab_size, embedding_size))
 	print("Size of title examples: {}".format(len(title_set['input'])))
+
+	global title
+	title = True
+
 	title_model = Sequential()
 	title_model.add(Embedding(input_dim=vocab_size, output_dim=embedding_size, weights=[pretrained_weights]))
 	title_model.add(LSTM(units=2*embedding_size, return_sequences=True))
@@ -296,25 +309,48 @@ def main():
 	model = title_model
 	hist = title_model.fit(title_set['input'], title_set['output'],
 	          batch_size=128,
-	          epochs=150,
+	          epochs=4,
 	          callbacks=[LambdaCallback(on_epoch_end=on_epoch_end)])
 
-	# lyric_model = Sequential()
-	# lyric_model.add(Embedding(input_dim=vocab_size, output_dim=embedding_size, weights=[pretrained_weights]))
-	# lyric_model.add(LSTM(units=2*embedding_size, return_sequences=True))
-	# lyric_model.add(LSTM(units=2*embedding_size))
-	# lyric_model.add(Dense(units=vocab_size))
-	# lyric_model.add(Activation('softmax'))
-	# lyric_model.compile(optimizer='adam', loss='sparse_categorical_crossentropy')
+	title = False
+	lyric_model = Sequential()
+	lyric_model.add(Embedding(input_dim=vocab_size, output_dim=embedding_size, weights=[pretrained_weights]))
+	lyric_model.add(LSTM(units=2*embedding_size, return_sequences=True))
+	lyric_model.add(LSTM(units=2*embedding_size))
+	lyric_model.add(Dense(units=vocab_size))
+	lyric_model.add(Activation('softmax'))
+	lyric_model.compile(optimizer='adam', loss='sparse_categorical_crossentropy')
 
-	# model = lyric_model
-	# l_hist = lyric_model.fit(lyric_set['input'], lyric_set['output'],
-	#           batch_size=16,
-	#           epochs=150,
-	#           callbacks=[LambdaCallback(on_epoch_end=on_epoch_end)])
+	model = lyric_model
+	l_hist = lyric_model.fit(lyric_set['input'], lyric_set['output'],
+	          batch_size=512,
+	          epochs=4,
+	          callbacks=[LambdaCallback(on_epoch_end=on_epoch_end)])
 
+	lyric_model.save("lyric_model.h5")
+	title_model.save("title_model.h5")
+
+	print("OK")
+	predict()
 
 	return
+
+def predict():
+
+	print("PREDICT")
+	title_model = load_model("title_model.h5")
+	lyric_model = load_model("lyric_model.h5")
+
+	inp = input()
+	global model
+	model = title_model
+
+	
+
+
+	print("PRINT")
+	print(lyric_model)
+	print(title_model)
 
 if __name__ == "__main__":
 	main()
