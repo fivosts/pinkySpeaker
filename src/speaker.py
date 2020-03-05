@@ -365,6 +365,6 @@ def predict():
 
 
 if __name__ == "__main__":
-	# main()
-	predict()
+	main()
+	# predict()
 	exit(0)
