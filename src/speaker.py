@@ -17,7 +17,7 @@ from keras.models import Sequential, load_model
 from keras.utils.data_utils import get_file
 import re
 
-DATASET_PATH="/home/fivosts/PhD/Code/pinkySpeaker/dataset/"
+DATASET_PATH="../dataset/"
 
 # print('\nFetching the text...')
 # url = 'https://raw.githubusercontent.com/maxim5/stanford-tensorflow-tutorials/master/data/arxiv_abstracts.txt'
