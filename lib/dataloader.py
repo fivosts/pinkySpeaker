@@ -1,9 +1,10 @@
 #!/usr/bin/env python
 
 from eupy import mrcrawley as cr
+import logging
 
-def gather_data():
 
-	# Make a map of pink floyd html and dataset folder
-	cr.crawlAZ("https://www.azlyrics.com/p/pinkfloyd.html", "./dataset/pink_floyd")
+def extract_artist(artist, target_path):
+	cr.crawlAZ(artist, path = target_path)
+	logging.info("Crawling {} succeeded".format(artist))
 	return
