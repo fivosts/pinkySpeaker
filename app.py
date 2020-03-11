@@ -22,7 +22,7 @@ def main():
 					choices = ["train", "gen"], required = False, 
 					help = "Choose between training a word model or generating songs")
 	p.add_argument('-t', '--train', default = [], 
-					required = False, 
+					required = False, nargs = "?", action = "append",
 					help = "Train model on selected artists")
 	p.add_argument('-dp', '--datapath', default = "./dataset", 
 					required = False, 
@@ -36,10 +36,11 @@ def main():
 	if args.mode == "train":
 		logging.info("Selected training of language model.")
 		artist_list = [os.path.join(args.datapath, x) for x in args.train]
-		dataset = fetch_data(artist_list)
+		dataset = dl.fetch_data(artist_list)
 		model = m.simpleRNN(dataset)
 	else:
-		check_model(args.modelpath)
+		#TODO
+		pass
 
 	return
 
