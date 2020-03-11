@@ -4,12 +4,13 @@ import sys, os, re
 from os import path as pt
 sys.path.append(pt.dirname("/home/fivosts/PhD/Code/eupy/eupy"))
 from eupy import mrcrawley as cr
-import logging
+
+from lib import logger as l
 
 def fetch_artist(artist, target_path):
-	logging.info("Set up web crawler to fetch {} data.\nStore to {}".format(artist, target_path))
+	l.logger.info("Set up web crawler to fetch {} data.\nStore to {}".format(artist, target_path))
 	cr.crawlAZ(artist, path = target_path)
-	logging.info("Crawling {} succeeded".format(artist))
+	l.logger.info("Crawling {} succeeded".format(artist))
 	return
 
 def pruned_sentence(sentence):
@@ -52,22 +53,23 @@ def read_dataset(artist_path):
 
 def dataset_exists(path, basename):
 
-	logging.info("Check if {} dataset exists.".format(basename))
+	l.logger.info("Check if {} dataset exists.".format(basename))
 	if not pt.isdir(path):
-		logging.warning("{} dataset does not exist.".format(basename))
+		l.logger.warning("{} dataset does not exist.".format(basename))
 		return False
 	else:
 		return True
 
 def fetch_data(artist_path_list):
 
-	logging.info("Fetch data of artist list.\n{}".format(artist_path_list))
+	l.logger.info("Fetch data of artist list.")
 	for artist_path in artist_path_list:
+		l.logger.info(artist_path)
 		basename = pt.basename(artist_path)
 		if not dataset_exists(artist_path, basename):
-			logging.info("Extract dataset for {}.".format(basename))		
+			l.logger.info("Extract dataset for {}.".format(basename))		
 			data = fetch_artist(basename, artist_path)
 		else:
-			logging.info("OK")
+			l.logger.info("OK")
 			data = read_dataset(artist_path)
 	return data
