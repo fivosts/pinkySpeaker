@@ -12,9 +12,9 @@ import argparse as arg
 import os
 
 """
-Core function.
+Argparse command line configuration
 """
-def main():
+def configArgs():
 
 	p = arg.ArgumentParser(description = "Song generator machine learning models")
 	p.add_argument('-m', '--mode', default = "gen", 
@@ -29,8 +29,15 @@ def main():
 	p.add_argument('-mp', '--modelpath', default = "./model", 
 					required = False, 
 					help = "Base path of models")
+	return p.parse_args()
 
-	args = p.parse_args()
+"""
+Core function.
+"""
+def main():
+
+	logger = l.getLogger('lyric_generator')
+	args = configArgs()
 
 	if args.mode == "train":
 		l.logger.info("Selected training of language model.")
