@@ -10,7 +10,7 @@ from eupy.native import logger as l
 def fetch_artist(artist, target_path):
 	l.getLogger().info("Set up web crawler to fetch {} data.".format(artist))
 	l.getLogger().info("Store to {}.".format(target_path))
-	cr.crawl(artist, path = target_path)
+	cr.crawl(artist)
 	l.getLogger().info("Crawling {} succeeded".format(artist))
 	return
 
