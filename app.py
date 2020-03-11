@@ -32,6 +32,9 @@ def configArgs():
 	p.add_argument('-mp', '--modelpath', default = "./model", 
 					required = False, 
 					help = "Base path of models")
+	p.add_argument('-dbg', '--debug', default = False, 
+					required = False, 
+					help = "Enable DEBUG information")
 	return p.parse_args()
 
 def setupFolders(folds):
