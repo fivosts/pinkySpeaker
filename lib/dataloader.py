@@ -3,13 +3,14 @@
 import sys, os, re
 from os import path as pt
 sys.path.append(pt.dirname("/home/fivosts/PhD/Code/eupy/eupy"))
-from eupy import mrcrawley as cr
+from eupy.mrcrawley import spider as cr
 
 from eupy.native import logger as l
 
 def fetch_artist(artist, target_path):
-	l.getLogger().info("Set up web crawler to fetch {} data.\nStore to {}".format(artist, target_path))
-	cr.crawlAZ(artist, path = target_path)
+	l.getLogger().info("Set up web crawler to fetch {} data.".format(artist))
+	l.getLogger().info("Store to {}.".format(target_path))
+	cr.crawl(artist, path = target_path)
 	l.getLogger().info("Crawling {} succeeded".format(artist))
 	return
 
