@@ -34,6 +34,12 @@ def configArgs():
 					help = "Base path of models")
 	return p.parse_args()
 
+def setupFolders(folds):
+	for f in folds:
+		l.getLogger().info("Setting up {}".format(f))
+		os.makedirs(f, exist_ok = True)
+	return
+
 """
 Core function.
 """
@@ -41,6 +47,7 @@ def main():
 
 	logger = l.initLogger('lyric_generator')
 	args = configArgs()
+	setupFolders((args.datapath, args.modelpath))
 
 	if args.mode == "train":
 		logger.info("Selected training of language model.")
