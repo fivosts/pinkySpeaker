@@ -6,17 +6,16 @@ This is the entry point of the application.
 """
 from lib import dataloader as dl
 from lib import model as m
+from lib import logger as l
 
 import argparse as arg
-import logging
 import os
 
 """
 Core function.
 """
 def main():
-	logging.basicConfig(format='%(asctime)s - %(message)s', level=logging.INFO)
-	
+
 	p = arg.ArgumentParser(description = "Song generator machine learning models")
 	p.add_argument('-m', '--mode', default = "gen", 
 					choices = ["train", "gen"], required = False, 
@@ -34,14 +33,15 @@ def main():
 	args = p.parse_args()
 
 	if args.mode == "train":
-		logging.info("Selected training of language model.")
-		artist_list = [os.path.join(args.datapath, x) for x in args.train]
+		l.logger.info("Selected training of language model.")
+		artist_list = [os.path.join(args.datapath, x.lower()) for x in args.train]
 		dataset = dl.fetch_data(artist_list)
 		model = m.simpleRNN(dataset)
 	else:
 		#TODO
 		pass
 
+	l.shutdown()
 	return
 
 """
