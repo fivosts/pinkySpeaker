@@ -6,6 +6,7 @@ from eupy import mrcrawley as cr
 import logging
 
 def fetch_artist(artist, target_path):
+	logging.info("Set up web crawler to fetch {} data.\nStore to {}".format(artist, target_path))
 	cr.crawlAZ(artist, path = target_path)
 	logging.info("Crawling {} succeeded".format(artist))
 	return
@@ -48,21 +49,22 @@ def read_dataset(artist_path):
 		dataset.append(read_file(file_path))
 	return dataset
 
-def check_dataset(path_list, basename):
+def dataset_exists(path_list, basename):
 
-	logging.info("Checking if {} dataset exists".format(basename))
+	logging.info("Check if {} dataset exists.".format(basename))
 	if not os.isdir(p):
-		logging.warning("{} dataset does not exist".format(basename))
-		logging.info("Extracting dataset for {}".format(basename))		
+		logging.warning("{} dataset does not exist.".format(basename))
 		return False
 	else:
 		return True
 
 def fetch_data(artist_path_list):
 
+	logging.info("Fetch data of artist list.\n{}".format(artist_path_list))
 	for artist_path in artist_path_list:
 		basename = os.path_list.basename(artist_path)
 		if not dataset_exists(artist_path, basename):
+			logging.info("Extract dataset for {}.".format(basename))		
 			data = fetch_artist(basename, artist_path)
 		else:
 			logging.info("OK")
