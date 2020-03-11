@@ -8,6 +8,7 @@ from eupy.mrcrawley import spider as cr
 from eupy.native import logger as l
 
 def fetch_artist(artist, target_path):
+	l.getLogger().debug("pinkySpeaker.lib.dataloader.fetch_artist()")
 	l.getLogger().info("Set up web crawler to fetch {} data.".format(artist))
 	l.getLogger().info("Store to {}.".format(target_path))
 	cr.crawl(artist)
@@ -15,6 +16,7 @@ def fetch_artist(artist, target_path):
 	return
 
 def pruned_sentence(sentence):
+	l.getLogger().debug("pinkySpeaker.lib.dataloader.pruned_sentence()")
 	return re.sub(".*?\[(.*?)\]", "", sentence)\
 			.lower()\
 			.replace("i'm", "i am").replace("it's", "it is")\
@@ -29,7 +31,8 @@ def pruned_sentence(sentence):
 			.split()
 
 def read_file(song_path):
-
+	l.getLogger().debug("pinkySpeaker.lib.dataloader.read_file()")
+	
 	with open(song_path, 'r') as f:
 		song = []
 		for line in f:
@@ -45,6 +48,7 @@ def read_file(song_path):
 	return {'artist': song[0], 'title': song[1], 'lyrics': song[2:]}
 
 def read_dataset(artist_path):
+	l.getLogger().debug("pinkySpeaker.lib.dataloader.read_dataset()")
 
 	dataset = []
 	for file in os.listdir(artist_path):
@@ -53,6 +57,7 @@ def read_dataset(artist_path):
 	return dataset
 
 def dataset_exists(path, basename):
+	l.getLogger().debug("pinkySpeaker.lib.dataloader.dataset_exists()")
 
 	l.getLogger().info("Check if {} dataset exists.".format(basename))
 	if not pt.isdir(path):
@@ -62,6 +67,7 @@ def dataset_exists(path, basename):
 		return True
 
 def fetch_data(artist_path_list):
+	l.getLogger().debug("pinkySpeaker.lib.dataloader.fetch_data()")
 
 	l.getLogger().info("Fetch data of artist list.")
 	for artist_path in artist_path_list:
