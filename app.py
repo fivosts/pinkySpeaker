@@ -50,6 +50,7 @@ def main():
 
 	args = configArgs()
 	logger = l.initLogger('lyric_generator', args.debug)
+	logger.debug("pinkySpeaker.app.main()")
 	setupFolders((args.datapath, args.modelpath))
 
 	if args.mode == "train":
