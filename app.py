@@ -33,7 +33,7 @@ def configArgs():
 					required = False, 
 					help = "Base path of models")
 	p.add_argument('-dbg', '--debug', default = False, 
-					required = False, 
+					required = False, action = 'store_true',
 					help = "Enable DEBUG information")
 	return p.parse_args()
 
