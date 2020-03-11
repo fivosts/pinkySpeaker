@@ -37,40 +37,41 @@ DATASET_PATH="../dataset/"
 word2vecmodel = None
 title = True
 
-def fetch_data():
+# Done
+# def fetch_data():
 
-	dataset = []
-	for file in os.listdir(DATASET_PATH):
-		with open(DATASET_PATH +file, 'r') as f:
-			song = []
-			for line in f:
-				if line != "\n":
-					sentence = re.sub(".*?\[(.*?)\]", "", line).lower().replace("i'm", "i am")\
-																		.replace("it's", "it is")\
-																		.replace("isn't", "is not")\
-																		.replace("there's", "there is")\
-																		.replace("they've", "they have")\
-																		.replace("\n", " endline")\
-																		.replace("we've", "we have")\
-																		.replace("wasn't", "was not")\
-																		.replace(".", " . ")\
-																		.replace(",", " , ")\
-																		.replace("-", "")\
-																		.replace("\"", "")\
-																		.replace(":", "")\
-																		.replace("(", "")\
-																		.replace(")", "")\
-																		.replace("?", " ?")\
-																		.replace("!", " !")\
-																		.split()
-					if sentence:
-						song.append(sentence)
-			artist = "_".join(song[0][:-1])
-			title = "_".join(song[1][:-1])
-			song[-1].append("endfile")
-			dataset.append({'artist': song[0], 'title': song[1], 'lyrics': song[2:]})
+# 	dataset = []
+# 	for file in os.listdir(DATASET_PATH):
+# 		with open(DATASET_PATH +file, 'r') as f:
+# 			song = []
+# 			for line in f:
+# 				if line != "\n":
+# 					sentence = re.sub(".*?\[(.*?)\]", "", line).lower().replace("i'm", "i am")\
+# 																		.replace("it's", "it is")\
+# 																		.replace("isn't", "is not")\
+# 																		.replace("there's", "there is")\
+# 																		.replace("they've", "they have")\
+# 																		.replace("\n", " endline")\
+# 																		.replace("we've", "we have")\
+# 																		.replace("wasn't", "was not")\
+# 																		.replace(".", " . ")\
+# 																		.replace(",", " , ")\
+# 																		.replace("-", "")\
+# 																		.replace("\"", "")\
+# 																		.replace(":", "")\
+# 																		.replace("(", "")\
+# 																		.replace(")", "")\
+# 																		.replace("?", " ?")\
+# 																		.replace("!", " !")\
+# 																		.split()
+# 					if sentence:
+# 						song.append(sentence)
+# 			artist = "_".join(song[0][:-1])
+# 			title = "_".join(song[1][:-1])
+# 			song[-1].append("endfile")
+# 			dataset.append({'artist': song[0], 'title': song[1], 'lyrics': song[2:]})
 
-	return dataset
+# 	return dataset
 
 def struct_sentences(dataset):
 
