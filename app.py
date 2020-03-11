@@ -48,8 +48,8 @@ Core function.
 """
 def main():
 
-	logger = l.initLogger('lyric_generator')
 	args = configArgs()
+	logger = l.initLogger('lyric_generator', args.debug)
 	setupFolders((args.datapath, args.modelpath))
 
 	if args.mode == "train":
