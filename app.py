@@ -6,7 +6,10 @@ This is the entry point of the application.
 """
 from lib import dataloader as dl
 from lib import model as m
-from lib import logger as l
+import sys
+from os import path as pt
+sys.path.append(pt.dirname("/home/fivosts/PhD/Code/eupy/eupy"))
+from eupy.native import logger as l
 
 import argparse as arg
 import os
@@ -36,11 +39,11 @@ Core function.
 """
 def main():
 
-	logger = l.getLogger('lyric_generator')
+	logger = l.initLogger('lyric_generator')
 	args = configArgs()
 
 	if args.mode == "train":
-		l.logger.info("Selected training of language model.")
+		logger.info("Selected training of language model.")
 		artist_list = [os.path.join(args.datapath, x.lower()) for x in args.train]
 		dataset = dl.fetch_data(artist_list)
 		model = m.simpleRNN(dataset)
@@ -48,7 +51,7 @@ def main():
 		#TODO
 		pass
 
-	l.shutdown()
+	logger.shutdown()
 	return
 
 """

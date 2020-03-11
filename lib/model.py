@@ -1,8 +1,11 @@
 #!/usr/bin/env python
-from lib import logger as l
+import sys
+from os import path as pt
+sys.path.append(pt.dirname("/home/fivosts/PhD/Code/eupy/eupy"))
+from eupy.native import logger as l
 
 class simpleRNN:
 
 	def __init__(self, data):
-		l.logger.critical("This is a dummy class to suppress errors")
+		l.getLogger().critical("This is a dummy class to suppress errors")
 		return
