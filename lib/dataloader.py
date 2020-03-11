@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 
-import sys, os
-sys.path.append(os.path.dirname("/home/fivosts/PhD/Code/eupy/eupy"))
+import sys, os, re
+from os import path as pt
+sys.path.append(pt.dirname("/home/fivosts/PhD/Code/eupy/eupy"))
 from eupy import mrcrawley as cr
 import logging
 
@@ -12,7 +13,7 @@ def fetch_artist(artist, target_path):
 	return
 
 def pruned_sentence(sentence):
-	return re.sub(".*?\[(.*?)\]", "", line)\
+	return re.sub(".*?\[(.*?)\]", "", sentence)\
 			.lower()\
 			.replace("i'm", "i am").replace("it's", "it is")\
 			.replace("isn't", "is not").replace("there's", "there is")\
@@ -45,14 +46,14 @@ def read_dataset(artist_path):
 
 	dataset = []
 	for file in os.listdir(artist_path):
-		file_path = os.path.join(artist_path, file)
+		file_path = pt.join(artist_path, file)
 		dataset.append(read_file(file_path))
 	return dataset
 
-def dataset_exists(path_list, basename):
+def dataset_exists(path, basename):
 
 	logging.info("Check if {} dataset exists.".format(basename))
-	if not os.isdir(p):
+	if not pt.isdir(path):
 		logging.warning("{} dataset does not exist.".format(basename))
 		return False
 	else:
@@ -62,7 +63,7 @@ def fetch_data(artist_path_list):
 
 	logging.info("Fetch data of artist list.\n{}".format(artist_path_list))
 	for artist_path in artist_path_list:
-		basename = os.path_list.basename(artist_path)
+		basename = pt.basename(artist_path)
 		if not dataset_exists(artist_path, basename):
 			logging.info("Extract dataset for {}.".format(basename))		
 			data = fetch_artist(basename, artist_path)
