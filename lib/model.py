@@ -6,6 +6,9 @@ from eupy.native import logger as l
 
 class simpleRNN:
 
+	_logger = None
+
 	def __init__(self, data):
-		l.getLogger().critical("This is a dummy class to suppress errors")
+		self._logger = l.getLogger()
+		self._logger.debug("pinkySpeaker.lib.model.simpleRNN.__init__()")
 		return
