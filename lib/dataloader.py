@@ -106,8 +106,8 @@ def fetch_data(artist_path_list):
 		if not dataset_exists(artist_path, basename):
 			l.getLogger().info("Extract dataset for {}.".format(basename))		
 			data = fetch_artist(basename)
+			writeToFiles(data)
 		else:
 			l.getLogger().info("OK")
 			data = read_dataset(artist_path)
-		writeToFiles(data)
 	return data
