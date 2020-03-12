@@ -28,12 +28,15 @@ class simpleRNN:
 		return 
 
 	def _initWordModel(self):
+		self._logger.debug("pinkySpeaker.lib.model.simpleRNN._initWordModel()")
 
 		return
 
 	def _initTitleModel(self):
+		self._logger.debug("pinkySpeaker.lib.model.simpleRNN._initTitleModel()")
 		return
 
 	def _initLyricModel(self):
+		self._logger.debug("pinkySpeaker.lib.model.simpleRNN._initLyricModel()")
 		return
 		
