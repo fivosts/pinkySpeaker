@@ -24,10 +24,13 @@ class simpleRNN:
         self._logger.debug("pinkySpeaker.lib.model.simpleRNN.__init__()")
 
         ## _dataset and _model are the two member variables of the class
-        self._dataset = data
+        self._dataset = None
         self._model = None
 
-        self._initArchitecture(data)
+        if data:
+            self._initArchitecture(data)
+        else:
+            self._loadArchitecture()
 
         return
 
