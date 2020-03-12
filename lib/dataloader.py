@@ -94,7 +94,7 @@ def writeToFiles(data, artist_path):
 
 """
 Boot function.
-Gets a requested artist and returns its data
+Gets a requested artist and returns its data.
 """
 def fetch_data(artist_path_list):
 	l.getLogger().debug("pinkySpeaker.lib.dataloader.fetch_data()")
