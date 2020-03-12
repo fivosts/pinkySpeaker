@@ -11,4 +11,7 @@ class simpleRNN:
 	def __init__(self, data = None):
 		self._logger = l.getLogger()
 		self._logger.debug("pinkySpeaker.lib.model.simpleRNN.__init__()")
+
+		#struct_sentences is only used for the word model
+		# One function that will return title_set, lyric_set
 		return
