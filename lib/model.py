@@ -24,6 +24,8 @@ class simpleRNN:
         self._logger.debug("pinkySpeaker.lib.model.simpleRNN.__init__()")
 
         self._data = data
+        self._model = None
+
         self._initNNModel()
         #struct_sentences is only used for the word model
         # One function that will return title_set, lyric_set
@@ -103,3 +105,8 @@ class simpleRNN:
                 for word in sent:
                     words.append(word)
         return self._listToChunksList(words, sentence_size)
+
+    def word2idx(self, word):
+        return self._model['word_model'].wv.vocab[word].index
+    def idx2word(self, idx):
+        return self._model['word_model'].wv.index2word[idx]
