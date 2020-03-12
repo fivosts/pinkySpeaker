@@ -22,6 +22,7 @@ class simpleRNN:
 	def __init__(self, data = None):
 		self._logger = l.getLogger()
 		self._logger.debug("pinkySpeaker.lib.model.simpleRNN.__init__()")
+
 		self._data = data
 		self._initNNModel()
 		#struct_sentences is only used for the word model
@@ -41,13 +42,15 @@ class simpleRNN:
 		self._model = { 'word_model'  : word_model,
 						'title_model' : title_model,
 						'lyric_model' : lyric_model 
-					  } 
+					  }
+	    self._logger.info("SimpleRNN Compiled successfully")
 		return 
 
 	def _initWordModel(self):
 		self._logger.debug("pinkySpeaker.lib.model.simpleRNN._initWordModel()")
 		inp_sent = self._constructSentences()
 		wm = gensim.models.Word2Vec(inp_sent, size = 300, min_count = 1, window = 4, iter = 200)
+		self._logger.info("Word2Vec word model initialized")
 		return wm
 
 	def _initTitleModel(self, weights):
@@ -62,7 +65,7 @@ class simpleRNN:
 		tm.add(Activation('softmax'))
 		tm.compile(optimizer='adam', loss='sparse_categorical_crossentropy')
 
-		self._logger.info("Title model compilation succeeded")
+		self._logger.info("Title model initialized")
 		return tm
 
 	def _initLyricModel(self, weights):
@@ -77,7 +80,7 @@ class simpleRNN:
 		tm.add(Activation('softmax'))
 		tm.compile(optimizer='adam', loss='sparse_categorical_crossentropy')
 
-		self._logger.info("Lyric model compilation succeeded")
+		self._logger.info("Lyric model initialized")
 		return tm
 
 	def _listToChunksList(self, lst, n):
