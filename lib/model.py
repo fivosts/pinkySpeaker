@@ -127,42 +127,51 @@ class simpleRNN:
                 'output': np.zeros([all_titles_length], dtype=np.int32)}
 
         index = 0
-        for j, song in enumerate(raw_data):
+        title_input = []
+        title_expected_output = []
+        lyric_input = []
+        lyric_expected_output = []
+        
+        for song in raw_data:
             ## i will go from 0->15
             ## i means: I will add this number of words. 1 word up to len()-1
-            for i in range(len(song['title']) - 1):
+            for sindx in range(len(song['title']) - 1):
                 # print("i: {}".format(i))
                 ## k will go from 0->i+1
                 ## k means: if i am adding i words, start counting each one with k
-                for k in range(i + 1):
+                for chindx in range(sindx + 1):
                     # print("k: {}".format(k))
                     # print(song['title'][k])
                     # print(song['title'][k+1])
                     # print(max_title_length - 1 + (k - i))
 
                     max_index = max_title_length - 1
-                    sentence_size = i
-                    current = k
+                    sentence_size = sindx
+                    current = chindx
                     # print("Going to insert {} in position: {}".format(song['title'][k], max_index - sentence_size + current))
 
-                    title_set['input'][index][max_index - sentence_size + current] = word2idx(song['title'][k])
-                    title_set['output'][index] = word2idx(song['title'][k+1])
+                    title_set['input'][index][max_index - sentence_size + current] = word2idx(song['title'][chindx])
+                    title_set['output'][index] = word2idx(song['title'][chindx + 1])
 
-        inputs = []
-        outputs = []
-
-        for song in raw_data:
             flat_song = [song['title']] + song['lyrics']
             flat_song = [" ".join(x) for x in flat_song]
             flat_song = " ".join(flat_song).split()
-            for i in range(len(flat_song) - 4):
-                inputs.append([word2idx(x) for x in flat_song[i : i + 4]])
-                outputs.append(word2idx(flat_song[i + 4]))
+            for indx in range(len(flat_song) - 4):
+                lyric_input.append([word2idx(x) for x in flat_song[indx : indx + 4]])
+                expected_output.append(word2idx(flat_song[indx + 4]))
 
-        lset = {'input': np.zeros([len(inputs), 4], dtype=np.int32), 'output': np.zeros([len(inputs)], dtype=np.int32)}
+        title_set = {'input': np.zeros([all_titles_length, max_title_length], dtype=np.int32), 
+                     'output': np.zeros([all_titles_length], dtype=np.int32)}
 
-        lset['input'] = np.asarray(inputs, dtype = np.int32)
-        lset['output'] = np.asarray(outputs, dtype = np.int32)
+        title_set['input'] = np.asarray(title_input, dtype = np.int32)
+        title_set['output'] = np.asarray(expected_title_output, dtype = np.int32)
+
+
+        lyric_set = {'input': np.zeros([len(lyric_input), 4], dtype=np.int32), 
+                     'output': np.zeros([len(lyric_input)], dtype=np.int32)}
+
+        lyric_set['input'] = np.asarray(lyric_input, dtype = np.int32)
+        lyric_set['output'] = np.asarray(lyric_expected_output, dtype = np.int32)
 
         return title_set, lyric_set
 
