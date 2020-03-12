@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import sys
 from os import path as pt
+from os import makedirs
 sys.path.append(pt.dirname("/home/fivosts/PhD/Code/eupy/eupy"))
 from eupy.native import logger as l
 
@@ -198,6 +199,8 @@ class simpleRNN:
                                                     epochs = 2,
                                                     callbacks = [LambdaCallback(on_epoch_end=self._lyrics_per_epoch)] )
         if save_model:
+            save_model = pt.join(save_model, "simpleRNN")
+            makedirs(save_model, exist_ok = True)
             self._model['word_model'].save(pt.join(save_model, "word_model.h5"))
             self._model['title_model'].save(pt.join(save_model, "title_model.h5"))
             self._model['lyric_model'].save(pt.join(save_model, "lyric_model.h5"))
