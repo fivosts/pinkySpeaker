@@ -143,8 +143,6 @@ class simpleRNN:
                      'output': np.zeros([all_titles_length], dtype=np.int32)}
 
         index = 0
-        title_input = []
-        title_expected_output = []
         lyric_input = []
         lyric_expected_output = []
         
