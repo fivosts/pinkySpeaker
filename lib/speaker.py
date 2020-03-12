@@ -149,13 +149,13 @@ def set_lyric_trainset(dataset, word_model):
 
 def trainWordModel(inp):
 
-	word_model = gensim.models.Word2Vec(inp, size=300, min_count=1, window=4, iter=200)
-	pretrained_weights = word_model.wv.vectors
-	vocab_size, embedding_size = pretrained_weights.shape
-	print(vocab_size)
-	print(embedding_size)
-	print(pretrained_weights.shape)
-	print('Result embedding shape:', pretrained_weights.shape)
+	# word_model = gensim.models.Word2Vec(inp, size=300, min_count=1, window=4, iter=200)
+	# pretrained_weights = word_model.wv.vectors
+	# vocab_size, embedding_size = pretrained_weights.shape
+	# print(vocab_size)
+	# print(embedding_size)
+	# print(pretrained_weights.shape)
+	# print('Result embedding shape:', pretrained_weights.shape)
 	print('Checking similar words:')
 	for word in ['dark', 'side', 'of', 'the', 'moon', 'endline', 'endfile']:
 		most_similar = ', '.join('%s (%.2f)' % (similar, dist) for similar, dist in word_model.wv.most_similar(word)[:8])
@@ -187,10 +187,10 @@ def trainWordModel(inp):
 
 	return word_model
 
-def word2idx(word, word_model):
-  return word_model.wv.vocab[word].index
-def idx2word(idx, word_model):
-  return word_model.wv.index2word[idx]
+# def word2idx(word, word_model):
+#   return word_model.wv.vocab[word].index
+# def idx2word(idx, word_model):
+#   return word_model.wv.index2word[idx]
 
 
 
