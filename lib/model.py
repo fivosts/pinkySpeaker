@@ -185,14 +185,14 @@ class simpleRNN:
 
         title_hist = self._model['title_model'].fit(self._dataset['title_model']['input'], 
                                                     self._dataset['title_model']['output'],
-                                                    batch_size = 4,
-                                                    epochs = 40,
+                                                    batch_size = 64,
+                                                    epochs = 3,
                                                     callbacks = [LambdaCallback(on_epoch_end=self._title_per_epoch)] )
 
-        title_hist = self._model['title_model'].fit(self._dataset['title_model']['input'], 
-                                                    self._dataset['title_model']['output'],
-                                                    batch_size = 4,
-                                                    epochs = 40,
+        lyric_hist = self._model['lyric_model'].fit(self._dataset['lyric_model']['input'], 
+                                                    self._dataset['lyric_model']['output'],
+                                                    batch_size = 128,
+                                                    epochs = 3,
                                                     callbacks = [LambdaCallback(on_epoch_end=self._lyrics_per_epoch)] )
         if save_path:
             self._model['word_model'].save(os.path.join(save_path, "word_model.h5"))
@@ -254,7 +254,7 @@ class simpleRNN:
                 break
             else:
                 if self.idx2word(idx) == "endline":
-                    K.set_value(model.layers[-2].weights[1][self.word2idx("endline", word2vecmodel)], init_endline_bias)
+                    K.set_value(model.layers[-2].weights[1][self.word2idx("endline")], init_endline_bias)
 
                 if title == True:
                     b = 2
