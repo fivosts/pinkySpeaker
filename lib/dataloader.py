@@ -7,13 +7,17 @@ from eupy.mrcrawley import spider as cr
 
 from eupy.native import logger as l
 
+"""
+Send crawl request to gather artist data
+Returns specific artist dataset
+"""
 def fetch_artist(artist, target_path):
 	l.getLogger().debug("pinkySpeaker.lib.dataloader.fetch_artist()")
 	l.getLogger().info("Set up web crawler to fetch {} data.".format(artist))
 	l.getLogger().info("Store to {}.".format(target_path))
 	cr.crawl(artist)
 	l.getLogger().info("Crawling {} succeeded".format(artist))
-	return
+	return cr.getArtistDataStr()
 
 def pruned_sentence(sentence):
 	l.getLogger().debug("pinkySpeaker.lib.dataloader.pruned_sentence()")
