@@ -84,6 +84,7 @@ Writes dataset to files
 """
 def writeToFiles(data, artist_path):
 	l.getLogger().debug("pinkySpeaker.lib.dataloader.writeToFiles()")
+	l.getLogger().info("Writing to path {}".format(artist_path))
 	for d in data:
 		with open(artist_path, 'w') as f:
 			f.write("{}\n{}\n\n{}".format(d['artist'], 
