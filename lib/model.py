@@ -61,6 +61,12 @@ class simpleRNN:
         self._logger.debug("pinkySpeaker.lib.model.simpleRNN._initDataset()")
 
         title_set, lyric_set = self._constructTLSet(raw_data, mx_t_l, all_t_l)
+
+        if len(title_set['input']) != len(title_set['output']):
+            raise ValueError("Wrong title set dimensions!")
+        if len(lyric_set['input']) != len(lyric_set['output']):
+            raise ValueError("Wrong lyric set dimensions!")
+
         self._dataset = { 'word_model'      : inp_sent,
                           'title_model'     : title_set,
                           'lyric_model'     : lyric_set 
@@ -173,3 +179,101 @@ class simpleRNN:
     def idx2word(self, idx):
         self._logger.debug("pinkySpeaker.lib.model.simpleRNN.idx2word()")
         return self._model['word_model'].wv.index2word[idx]
+
+    def fit(self, save_path = None):
+        self._logger.debug("pinkySpeaker.lib.model.simpleRNN.fit()")
+
+        title_hist = self._model['title_model'].fit(self._dataset['title_model']['input'], 
+                                                    self._dataset['title_model']['output'],
+                                                    batch_size = 4,
+                                                    epochs = 40,
+                                                    callbacks = [LambdaCallback(on_epoch_end=self._title_per_epoch)] )
+
+        title_hist = self._model['title_model'].fit(self._dataset['title_model']['input'], 
+                                                    self._dataset['title_model']['output'],
+                                                    batch_size = 4,
+                                                    epochs = 40,
+                                                    callbacks = [LambdaCallback(on_epoch_end=self._lyrics_per_epoch)] )
+        if save_path:
+            self._model['word_model'].save(os.path.join(save_path, "word_model.h5"))
+            self._model['title_model'].save(os.path.join(save_path, "word_model.h5"))
+            self._model['lyric_model'].save(os.path.join(save_path, "word_model.h5"))
+        return
+
+    def _title_per_epoch(self, epoch, _):
+
+        print('\nGenerating text after epoch: %d' % epoch)
+        texts = [
+                'dark',
+                'dark side',
+                'another',
+                'echoes',
+                'high',
+                'shine',
+                'on',
+                'have',
+                'comfortably'
+            ]
+        for text in texts:
+            sample = self.generate_next(text, self._model['title_model'], title = True)
+            print('%s... -> %s' % (text, sample))
+        return
+
+    def _lyrics_per_epoch(self, epoch, _):
+
+        print('\nGenerating text after epoch: %d' % epoch)
+        texts = [
+                'dark side',
+                'another brick in the wall',
+                'echoes',
+                'high hopes',
+                'shine on you crazy diamond',
+                'breathe',
+                'have a cigar',
+                'comfortably numb'
+            ]
+        for text in texts:
+            sample = self.generate_next(text, self._model['lyric_model'], title = False)
+            print('%s... -> %s' % (text, sample))
+        return
+
+    def generate_next(self, text, model, title, num_generated=140):
+        word_idxs = [self.word2idx(word) for word in text.lower().split()]
+        # print(model.layers[-2])
+        # print(model.layers[-2].weights[1])
+        init_endline_bias = model.layers[-2].weights[1][self.word2idx("endline")]
+        init_endfile_bias = model.layers[-2].weights[1][self.word2idx("endfile")]
+        for i in range(num_generated):
+        # while True:
+            prediction = model.predict(x=np.array(word_idxs))
+
+            idx = self.sample(prediction[-1], temperature=0.7)
+            word_idxs.append(idx)
+            # if idx2word(idx, word2vecmodel) == "endline" or idx2word(idx, word2vecmodel) == "endfile":
+            if (title == True and (self.idx2word(idx) == "endline" or self.idx2word(idx) == "endfile")) or (title == False and self.idx2word(idx) == "endfile"):
+                break
+            else:
+                if self.idx2word(idx) == "endline":
+                    K.set_value(model.layers[-2].weights[1][self.word2idx("endline", word2vecmodel)], init_endline_bias)
+
+                if title == True:
+                    b = 2
+                else:
+                    b = 0.2
+                K.set_value(model.layers[-2].weights[1][self.word2idx("endline")], model.layers[-2].weights[1][self.word2idx("endline")] + b*abs(model.layers[-2].weights[1][self.word2idx("endline")]))
+                K.set_value(model.layers[-2].weights[1][self.word2idx("endfile")], model.layers[-2].weights[1][self.word2idx("endfile")] + 0.4*abs(model.layers[-2].weights[1][self.word2idx("endfile")]))
+        K.set_value(model.layers[-2].weights[1][self.word2idx("endline")], init_endline_bias)
+        K.set_value(model.layers[-2].weights[1][self.word2idx("endfile")], init_endfile_bias)
+
+        return ' '.join(self.idx2word(idx) for idx in word_idxs)
+
+
+    def sample(self, preds, temperature=1.0):
+        if temperature <= 0:
+            return np.argmax(preds)
+        preds = np.asarray(preds).astype('float64')
+        preds = np.log(preds) / temperature
+        exp_preds = np.exp(preds)
+        preds = exp_preds / np.sum(exp_preds)
+        probas = np.random.multinomial(1, preds, 1)
+        return np.argmax(probas)
