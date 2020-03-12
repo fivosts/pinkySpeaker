@@ -180,27 +180,28 @@ class simpleRNN:
         self._logger.debug("pinkySpeaker.lib.model.simpleRNN.idx2word()")
         return self._model['word_model'].wv.index2word[idx]
 
-    def fit(self, save_path = None):
+    def fit(self, save_model = None):
         self._logger.debug("pinkySpeaker.lib.model.simpleRNN.fit()")
 
         title_hist = self._model['title_model'].fit(self._dataset['title_model']['input'], 
                                                     self._dataset['title_model']['output'],
-                                                    batch_size = 64,
-                                                    epochs = 3,
+                                                    batch_size = 128,
+                                                    epochs = 2,
                                                     callbacks = [LambdaCallback(on_epoch_end=self._title_per_epoch)] )
 
         lyric_hist = self._model['lyric_model'].fit(self._dataset['lyric_model']['input'], 
                                                     self._dataset['lyric_model']['output'],
-                                                    batch_size = 128,
-                                                    epochs = 3,
+                                                    batch_size = 256,
+                                                    epochs = 2,
                                                     callbacks = [LambdaCallback(on_epoch_end=self._lyrics_per_epoch)] )
-        if save_path:
-            self._model['word_model'].save(os.path.join(save_path, "word_model.h5"))
-            self._model['title_model'].save(os.path.join(save_path, "word_model.h5"))
-            self._model['lyric_model'].save(os.path.join(save_path, "word_model.h5"))
+        if save_model:
+            self._model['word_model'].save(pt.join(save_model, "word_model.h5"))
+            self._model['title_model'].save(pt.join(save_model, "title_model.h5"))
+            self._model['lyric_model'].save(pt.join(save_model, "lyric_model.h5"))
         return
 
     def _title_per_epoch(self, epoch, _):
+        self._logger.debug("pinkySpeaker.lib.model.simpleRNN._title_per_epoch()")
 
         print('\nGenerating text after epoch: %d' % epoch)
         texts = [
@@ -215,11 +216,12 @@ class simpleRNN:
                 'comfortably'
             ]
         for text in texts:
-            sample = self.generate_next(text, self._model['title_model'], title = True)
-            print('%s... -> %s' % (text, sample))
+            _sample = self._generate_next(text, self._model['title_model'], title = True)
+            print('%s... -> %s' % (text, _sample))
         return
 
     def _lyrics_per_epoch(self, epoch, _):
+        self._logger.debug("pinkySpeaker.lib.model.simpleRNN._lyrics_per_epoch()")
 
         print('\nGenerating text after epoch: %d' % epoch)
         texts = [
@@ -233,23 +235,21 @@ class simpleRNN:
                 'comfortably numb'
             ]
         for text in texts:
-            sample = self.generate_next(text, self._model['lyric_model'], title = False)
+            sample = self._generate_next(text, self._model['lyric_model'], title = False)
             print('%s... -> %s' % (text, sample))
         return
 
-    def generate_next(self, text, model, title, num_generated=140):
+    def _generate_next(self, text, model, title, num_generated=140):
+        self._logger.debug("pinkySpeaker.lib.model.simpleRNN._generate_next()")
+
         word_idxs = [self.word2idx(word) for word in text.lower().split()]
-        # print(model.layers[-2])
-        # print(model.layers[-2].weights[1])
         init_endline_bias = model.layers[-2].weights[1][self.word2idx("endline")]
         init_endfile_bias = model.layers[-2].weights[1][self.word2idx("endfile")]
         for i in range(num_generated):
-        # while True:
             prediction = model.predict(x=np.array(word_idxs))
 
-            idx = self.sample(prediction[-1], temperature=0.7)
+            idx = self._sample(prediction[-1], temperature=0.7)
             word_idxs.append(idx)
-            # if idx2word(idx, word2vecmodel) == "endline" or idx2word(idx, word2vecmodel) == "endfile":
             if (title == True and (self.idx2word(idx) == "endline" or self.idx2word(idx) == "endfile")) or (title == False and self.idx2word(idx) == "endfile"):
                 break
             else:
@@ -268,7 +268,9 @@ class simpleRNN:
         return ' '.join(self.idx2word(idx) for idx in word_idxs)
 
 
-    def sample(self, preds, temperature=1.0):
+    def _sample(self, preds, temperature=1.0):
+        self._logger.debug("pinkySpeaker.lib.model.simpleRNN._sample()")
+
         if temperature <= 0:
             return np.argmax(preds)
         preds = np.asarray(preds).astype('float64')
