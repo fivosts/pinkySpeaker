@@ -140,7 +140,7 @@ class simpleRNN:
         self._logger.debug("pinkySpeaker.lib.model.simpleRNN._constructTLSet()")
 
         title_set = {'input': np.zeros([all_titles_length, max_title_length], dtype=np.int32), 
-                'output': np.zeros([all_titles_length], dtype=np.int32)}
+                     'output': np.zeros([all_titles_length], dtype=np.int32)}
 
         index = 0
         title_input = []
