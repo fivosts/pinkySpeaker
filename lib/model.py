@@ -23,12 +23,19 @@ class simpleRNN:
         self._logger = l.getLogger()
         self._logger.debug("pinkySpeaker.lib.model.simpleRNN.__init__()")
 
-        self._data = data
+        self._dataset = data
         self._model = None
 
-        self._initNNModel(data)
-        #struct_sentences is only used for the word model
-        # One function that will return title_set, lyric_set
+        self._initArchitecture(data)
+
+        return
+
+    def _initArchitecture(self, raw_data):
+        self._logger.debug("pinkySpeaker.lib.model.simpleRNN._initArchitecture()")
+
+        max_title_length, all_titles_length, inp_sentences = self._initNNModel(raw_data)
+        self._initDataset(raw_data, max_title_length, all_titles_length, inp_sentences)
+
         return
 
     def _initNNModel(self, raw_data):
@@ -49,15 +56,19 @@ class simpleRNN:
                       }
         self._logger.info("SimpleRNN Compiled successfully")
 
+        return max_title_length, all_titles_length, inp_sent
 
-        title_set, lyric_set = self._constructTLSet(raw_data, max_title_length, all_titles_length)
-        self._data = { 'word_model'     : inp_sent,
-                       'title_model'    : title_set,
-                       'lyric_model'    : lyric_set 
+    def _initDataset(self, raw_data, mx_t_l, all_t_l, inp_sent):
+        self._logger.debug("pinkySpeaker.lib.model.simpleRNN._initDataset()")
+
+        title_set, lyric_set = self._constructTLSet(raw_data, mx_t_l, all_t_l)
+        self._dataset = { 'word_model'      : inp_sent,
+                          'title_model'     : title_set,
+                          'lyric_model'     : lyric_set 
                      }
 
-                     
-        return 
+        self._logger.info("Dataset constructed successfully")
+        return   
 
     def _initWordModel(self, inp_sentences):
         self._logger.debug("pinkySpeaker.lib.model.simpleRNN._initWordModel()")
