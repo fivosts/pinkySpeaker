@@ -30,9 +30,7 @@ class simpleRNN:
 
         if data:
             self._initArchitecture(data)
-        else:
-            self._loadArchitecture()
-
+        self._logger.info("SimpleRNN model")
         return
 
     def _initArchitecture(self, raw_data):
