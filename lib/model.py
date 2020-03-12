@@ -26,18 +26,26 @@ class simpleRNN:
         self._data = data
         self._model = None
 
-        self._initNNModel()
+        self._initNNModel(data)
         #struct_sentences is only used for the word model
         # One function that will return title_set, lyric_set
         return
 
-    def _initNNModel(self):
+    def _initNNModel(self, raw_data):
         self._logger.debug("pinkySpeaker.lib.model.simpleRNN._initNNModel()")
         self._logger.info("Initialize NN Model")
         ## Any new sub-model should be registered here
         ## The according function should be written
-        word_model = self._initWordModel()
+
+        inp_sent, max_title_length, all_titles_length = self._constructSentences(raw_data)
+        word_model = self._initWordModel(inp_sent)
         pretrained_weights = word_model.wv.vectors
+
+        title_set, lyric_set = self._constructTLSet(raw_data, max_title_length, all_titles_length)
+        self._data = { 'word_model'     : inp_sent,
+                       'title_model'    : title_set,
+                       'lyric_model'    : lyric_set 
+                     }
 
         title_model = self._initTitleModel(pretrained_weights)
         lyric_model = self._initLyricModel(pretrained_weights)
@@ -48,10 +56,9 @@ class simpleRNN:
         self._logger.info("SimpleRNN Compiled successfully")
         return 
 
-    def _initWordModel(self):
+    def _initWordModel(self, inp_sentences):
         self._logger.debug("pinkySpeaker.lib.model.simpleRNN._initWordModel()")
-        inp_sent = self._constructSentences()
-        wm = gensim.models.Word2Vec(inp_sent, size = 300, min_count = 1, window = 4, iter = 200)
+        wm = gensim.models.Word2Vec(inp_sentences, size = 300, min_count = 1, window = 4, iter = 200)
         self._logger.info("Word2Vec word model initialized")
         return wm
 
@@ -92,19 +99,72 @@ class simpleRNN:
             chunk_list.append(lst[i: i + n])
         return chunk_list
 
-    def _constructSentences(self):
+    def _constructSentences(self, raw_data):
         self._logger.debug("pinkySpeaker.lib.model.simpleRNN._constructSentences()")
         self._logger.info("Sentence preprocessing for word model")
 
         sentence_size = 10
+        max_title_length = 0
+        all_titles_length = 0
         words = []
-        for song in self._data:
+        for song in raw_data:
+
+            curr_title_length = len(song['title'])
+            all_titles_length += curr_title_length - 1
+            if curr_title_length > title_length:
+                title_length = curr_title_length
+            
             for word in song['title']:
                 words.append(word)
             for sent in song['lyrics']:
                 for word in sent:
                     words.append(word)
-        return self._listToChunksList(words, sentence_size)
+        return self._listToChunksList(words, sentence_size), max_title_length, all_titles_length
+
+    def _constructTLSet(self, raw_data, max_title_length, all_titles_length):
+
+        title_set = {'input': np.zeros([all_titles_length, max_title_length], dtype=np.int32), 
+                'output': np.zeros([all_titles_length], dtype=np.int32)}
+
+        index = 0
+        for j, song in enumerate(raw_data):
+            ## i will go from 0->15
+            ## i means: I will add this number of words. 1 word up to len()-1
+            for i in range(len(song['title']) - 1):
+                # print("i: {}".format(i))
+                ## k will go from 0->i+1
+                ## k means: if i am adding i words, start counting each one with k
+                for k in range(i + 1):
+                    # print("k: {}".format(k))
+                    # print(song['title'][k])
+                    # print(song['title'][k+1])
+                    # print(max_title_length - 1 + (k - i))
+
+                    max_index = max_title_length - 1
+                    sentence_size = i
+                    current = k
+                    # print("Going to insert {} in position: {}".format(song['title'][k], max_index - sentence_size + current))
+
+                    title_set['input'][index][max_index - sentence_size + current] = word2idx(song['title'][k])
+                    title_set['output'][index] = word2idx(song['title'][k+1])
+
+        inputs = []
+        outputs = []
+
+        for song in raw_data:
+            flat_song = [song['title']] + song['lyrics']
+            flat_song = [" ".join(x) for x in flat_song]
+            flat_song = " ".join(flat_song).split()
+            for i in range(len(flat_song) - 4):
+                inputs.append([word2idx(x) for x in flat_song[i : i + 4]])
+                outputs.append(word2idx(flat_song[i + 4]))
+
+        lset = {'input': np.zeros([len(inputs), 4], dtype=np.int32), 'output': np.zeros([len(inputs)], dtype=np.int32)}
+
+        lset['input'] = np.asarray(inputs, dtype = np.int32)
+        lset['output'] = np.asarray(outputs, dtype = np.int32)
+
+        return title_set, lyric_set
 
     def word2idx(self, word):
         return self._model['word_model'].wv.vocab[word].index
