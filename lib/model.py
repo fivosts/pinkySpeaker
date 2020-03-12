@@ -23,6 +23,7 @@ class simpleRNN:
         self._logger = l.getLogger()
         self._logger.debug("pinkySpeaker.lib.model.simpleRNN.__init__()")
 
+        ## _dataset and _model are the two member variables of the class
         self._dataset = data
         self._model = None
 
