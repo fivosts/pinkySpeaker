@@ -80,6 +80,18 @@ def dataset_exists(path, basename):
 		return True
 
 """
+Writes dataset to files
+"""
+def writeToFiles(data, artist_path):
+	l.getLogger().debug("pinkySpeaker.lib.dataloader.writeToFiles()")
+	for d in data:
+		with open(artist_path, 'w') as f:
+			f.write("{}\n{}\n\n{}".format(d['artist'], 
+										d['title'], 
+										"\n".join(d['lyrics'])))
+	return
+
+"""
 Boot function.
 Gets a requested artist and returns its data
 """
@@ -96,4 +108,5 @@ def fetch_data(artist_path_list):
 		else:
 			l.getLogger().info("OK")
 			data = read_dataset(artist_path)
+		writeToFiles(data)
 	return data
