@@ -8,8 +8,8 @@ from eupy.mrcrawley import spider as cr
 from eupy.native import logger as l
 
 """
-Send crawl request to gather artist data
-Returns specific artist dataset
+Send crawl request to gather artist data.
+Returns specific artist dataset.
 """
 def fetch_artist(artist, target_path):
 	l.getLogger().debug("pinkySpeaker.lib.dataloader.fetch_artist()")
@@ -19,6 +19,9 @@ def fetch_artist(artist, target_path):
 	l.getLogger().info("Crawling {} succeeded".format(artist))
 	return cr.getArtistDataStr()
 
+"""
+Reconstruct input sentence and return it.
+"""
 def pruned_sentence(sentence):
 	l.getLogger().debug("pinkySpeaker.lib.dataloader.pruned_sentence()")
 	return re.sub(".*?\[(.*?)\]", "", sentence)\
@@ -34,6 +37,9 @@ def pruned_sentence(sentence):
 			.replace("!", " !")\
 			.split()
 
+"""
+Reads a single song file and returns a dictionary with artist, title, lyric section.
+"""
 def read_file(song_path):
 	l.getLogger().debug("pinkySpeaker.lib.dataloader.read_file()")
 	
@@ -51,6 +57,9 @@ def read_file(song_path):
 	# The rest of it is the lyrics
 	return {'artist': song[0], 'title': song[1], 'lyrics': song[2:]}
 
+"""
+Iterates over all song files of a specific artist.
+"""
 def read_dataset(artist_path):
 	l.getLogger().debug("pinkySpeaker.lib.dataloader.read_dataset()")
 
@@ -60,6 +69,9 @@ def read_dataset(artist_path):
 		dataset.append(read_file(file_path))
 	return dataset
 
+"""
+Boolean check whether requested artist's dataset exists.
+"""
 def dataset_exists(path, basename):
 	l.getLogger().debug("pinkySpeaker.lib.dataloader.dataset_exists()")
 
@@ -70,6 +82,10 @@ def dataset_exists(path, basename):
 	else:
 		return True
 
+"""
+Boot function.
+Gets a requested artist and returns its data
+"""
 def fetch_data(artist_path_list):
 	l.getLogger().debug("pinkySpeaker.lib.dataloader.fetch_data()")
 
