@@ -73,18 +73,18 @@ title = True
 
 # 	return dataset
 
-def struct_sentences(dataset):
+# def struct_sentences(dataset):
 
-	sentences = []
-	max_len = 0
-	for song in dataset:
-		s = [song['title']] + song['lyrics']
-		for sen in s:
-			if len(sen) > max_len:
-				max_len = len(sen)
-		sentences += s
-	# print(sentences)
-	return sentences, max_len
+# 	sentences = []
+# 	max_len = 0
+# 	for song in dataset:
+# 		s = [song['title']] + song['lyrics']
+# 		for sen in s:
+# 			if len(sen) > max_len:
+# 				max_len = len(sen)
+# 		sentences += s
+# 	# print(sentences)
+# 	return sentences, max_len
 
 def set_title_trainset(dataset, word_model):
 	title_length = 0
