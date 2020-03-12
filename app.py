@@ -57,7 +57,7 @@ def main():
 		logger.info("Selected training of language model.")
 		artist_list = [os.path.join(args.datapath, x.lower()) for x in args.train]
 		dataset = dl.fetch_data(artist_list)
-		model = m.simpleRNN(dataset)
+		model = m.simpleRNN(data = dataset)
 	else:
 		#TODO
 		pass

@@ -8,7 +8,7 @@ class simpleRNN:
 
 	_logger = None
 
-	def __init__(self, data):
+	def __init__(self, data = None):
 		self._logger = l.getLogger()
 		self._logger.debug("pinkySpeaker.lib.model.simpleRNN.__init__()")
 		return
