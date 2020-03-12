@@ -11,13 +11,10 @@ from eupy.native import logger as l
 Send crawl request to gather artist data.
 Returns specific artist dataset.
 """
-def fetch_artist(artist, target_path):
+def fetch_artist(artist):
 	l.getLogger().debug("pinkySpeaker.lib.dataloader.fetch_artist()")
-	l.getLogger().info("Set up web crawler to fetch {} data.".format(artist))
-	l.getLogger().info("Store to {}.".format(target_path))
-	cr.crawl(artist)
-	l.getLogger().info("Crawling {} succeeded".format(artist))
-	return cr.getArtistDataStr()
+	data = cr.crawl(artist)
+	return data
 
 """
 Reconstruct input sentence and return it.
@@ -95,7 +92,7 @@ def fetch_data(artist_path_list):
 		basename = pt.basename(artist_path)
 		if not dataset_exists(artist_path, basename):
 			l.getLogger().info("Extract dataset for {}.".format(basename))		
-			data = fetch_artist(basename, artist_path)
+			data = fetch_artist(basename)
 		else:
 			l.getLogger().info("OK")
 			data = read_dataset(artist_path)
