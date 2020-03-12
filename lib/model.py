@@ -54,28 +54,30 @@ class simpleRNN:
 		self._logger.debug("pinkySpeaker.lib.model.simpleRNN._initTitleModel()")
 
 		vocab_size, embedding_size = weights.shape
-		tm = Sequential(Embedding(input_dim=vocab_size, 
-								  output_dim=embedding_size, 
-								  weights=[weights]))
+		tm = Sequential()
+		tm.add(Embedding(input_dim=vocab_size, output_dim=embedding_size, weights=[weights]))
 		tm.add(LSTM(units=2*embedding_size, return_sequences=True))
 		tm.add(LSTM(units=2*embedding_size))
 		tm.add(Dense(units=vocab_size))
 		tm.add(Activation('softmax'))
 		tm.compile(optimizer='adam', loss='sparse_categorical_crossentropy')
+
+		self._logger.info("Title model compilation succeeded")
 		return tm
 
 	def _initLyricModel(self, weights):
 		self._logger.debug("pinkySpeaker.lib.model.simpleRNN._initLyricModel()")
 
 		vocab_size, embedding_size = weights.shape
-		tm = Sequential(Embedding(input_dim=vocab_size, 
-								  output_dim=embedding_size, 
-								  weights=[weights]))
+		tm = Sequential()
+		tm.add(Embedding(input_dim=vocab_size, output_dim=embedding_size, weights=[weights]))
 		tm.add(LSTM(units=2*embedding_size, return_sequences=True))
 		tm.add(LSTM(units=2*embedding_size))
 		tm.add(Dense(units=vocab_size))
 		tm.add(Activation('softmax'))
 		tm.compile(optimizer='adam', loss='sparse_categorical_crossentropy')
+
+		self._logger.info("Lyric model compilation succeeded")
 		return tm
 
 	def _listToChunksList(self, lst, n):
@@ -87,6 +89,7 @@ class simpleRNN:
 
 	def _constructSentences(self):
 		self._logger.debug("pinkySpeaker.lib.model.simpleRNN._constructSentences()")
+		self._logger.info("Sentence preprocessing for word model")
 
 		sentence_size = 10
 		words = []
