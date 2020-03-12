@@ -42,18 +42,16 @@ class simpleRNN:
     def _initNNModel(self, raw_data):
         self._logger.debug("pinkySpeaker.lib.model.simpleRNN._initNNModel()")
         self._logger.info("Initialize NN Model")
-        ## Any new sub-model should be registered here
-        ## The according function should be written
 
         inp_sent, max_title_length, all_titles_length = self._constructSentences(raw_data)
         word_model = self._initWordModel(inp_sent)
         pretrained_weights = word_model.wv.vectors
-
-        title_model = self._initTitleModel(pretrained_weights)
-        lyric_model = self._initLyricModel(pretrained_weights)
+ 
+        ## Any new sub-model should be registered here
+        ## The according function should be written to initialize it
         self._model = { 'word_model'  : word_model,
-                        'title_model' : title_model,
-                        'lyric_model' : lyric_model 
+                        'title_model' : self._initTitleModel(pretrained_weights),
+                        'lyric_model' : self._initLyricModel(pretrained_weights) 
                       }
         self._logger.info("SimpleRNN Compiled successfully")
 
