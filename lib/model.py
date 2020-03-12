@@ -80,18 +80,20 @@ class simpleRNN:
 
 	def _listToChunksList(self, lst, n):
 		self._logger.debug("pinkySpeaker.lib.model.simpleRNN._listToChunksList()")
+		chunk_list = []
 		for i in range(0, len(lst), n):
-			yield lst[i: i + n]
+			chunk_list.append(lst[i: i + n])
+		return chunk_list
 
 	def _constructSentences(self):
 		self._logger.debug("pinkySpeaker.lib.model.simpleRNN._constructSentences()")
-		# print ([ [song['title']] + song['lyrics'] for song in self._data ])
 
 		sentence_size = 10
 		words = []
 		for song in self._data:
 			for word in song['title']:
 				words.append(word)
-			for word in song['lyrics']:
-				words.append(word)
+			for sent in song['lyrics']:
+				for word in sent:
+					words.append(word)
 		return self._listToChunksList(words, sentence_size)
