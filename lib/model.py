@@ -161,7 +161,7 @@ class simpleRNN:
 
             # flat_song = [song['title']] + song['lyrics']
             # flat_song = [" ".join(x) for x in [song['title']] + song['lyrics']]
-            flat_song = " ".join([" ".join(x) for x in [song['title']] + song['lyrics']]).split()
+            flat_song = " ".join([" ".join(x) for x in song['lyrics']]).split()
             for indx in range(len(flat_song) - 4):
                 lyric_input.append([self.word2idx(x) for x in flat_song[indx : indx + 4]])
                 lyric_expected_output.append(self.word2idx(flat_song[indx + 4]))
