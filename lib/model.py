@@ -104,15 +104,15 @@ class simpleRNN:
 
         vocab_size, embedding_size = weights.shape
         tm = Sequential()
-        tm.add(Embedding(input_dim=vocab_size, batch_input_shape = (None, 595), output_dim=embedding_size, trainable = False, weights=[weights]))
-        tm.add(LSTM(units=2*embedding_size, return_sequences=True))
-        tm.add(LSTM(units=2*embedding_size, return_sequences = True))
+        tm.add(Embedding(input_dim=vocab_size, output_dim=embedding_size, trainable = False, weights=[weights]))
+        tm.add(LSTM(units=2*embedding_size, input_shape = (55, embedding_size), return_sequences=True))
+        tm.add(LSTM(units=2*embedding_size, input_shape = (55, 2*embedding_size), return_sequences = True))
         # tm.add(Flatten())
-        tm.add(TimeDistributed(Dense(units=vocab_size, input_shape = (595, 600), activation = 'softmax')))
+        tm.add(TimeDistributed(Dense(units=vocab_size, activation = 'softmax')))
         # tm.add(Flatten())
         # tm.add(Dense(units = vocab_size, activation = 'softmax'))
         # tm.add(Activation('softmax'))
-        tm.compile(optimizer='adam', loss='sparse_categorical_crossentropy')
+        tm.compile(optimizer='adam', loss='mean_squared_error')
         print(tm.summary())
         self._logger.info("Lyric model initialized")
         return tm
@@ -198,13 +198,15 @@ class simpleRNN:
         print(self._dataset['lyric_model']['input'])
         print(self._dataset['lyric_model']['input'].shape)
 
-        synthetic_in, synthetic_out = self._generateSynthetic()
-        test_out = np.zeros((595, 2917))
+        # synthetic_in, synthetic_out = self._generateSynthetic()
 
-        print(synthetic_in.shape)
+        test_in = np.zeros((126, 55))
+        test_out = np.zeros((126, 55, 2917))
+
+        print(test_in.shape)
         print(test_out.shape)
 
-        lyric_hist = self._model['lyric_model'].fit(synthetic_in, 
+        lyric_hist = self._model['lyric_model'].fit(test_in, 
                                                     test_out,
                                                     batch_size = 16,
                                                     epochs = 2,
@@ -220,7 +222,7 @@ class simpleRNN:
     def _generateSynthetic(self):
 
         num_songs = 126
-        max_song_len = 595
+        max_song_len = 55
         synthetic_in, synthetic_out = [], []
         songs = []
 
