@@ -25,6 +25,7 @@ class simpleRNN:
         self._logger.debug("pinkySpeaker.lib.model.simpleRNN.__init__()")
 
         ## _dataset and _model are the two member variables of the class
+        self._raw_data = data
         self._dataset = None
         self._model = None
 
@@ -185,14 +186,20 @@ class simpleRNN:
     def fit(self, save_model = None):
         self._logger.debug("pinkySpeaker.lib.model.simpleRNN.fit()")
 
-        title_hist = self._model['title_model'].fit(self._dataset['title_model']['input'], 
-                                                    self._dataset['title_model']['output'],
-                                                    batch_size = 128,
-                                                    epochs = 2,
-                                                    callbacks = [LambdaCallback(on_epoch_end=self._title_per_epoch)] )
+        # title_hist = self._model['title_model'].fit(self._dataset['title_model']['input'], 
+        #                                             self._dataset['title_model']['output'],
+        #                                             batch_size = 128,
+        #                                             epochs = 2,
+        #                                             callbacks = [LambdaCallback(on_epoch_end=self._title_per_epoch)] )
 
-        lyric_hist = self._model['lyric_model'].fit(self._dataset['lyric_model']['input'], 
-                                                    self._dataset['lyric_model']['output'],
+        print(self._dataset['lyric_model']['input'])
+        print(self._dataset['lyric_model']['input'].shape)
+
+        synthetic_in, synthetic_out = self._generateSynthetic()
+
+        exit(1)
+        lyric_hist = self._model['lyric_model'].fit(synthetic_in, 
+                                                    synthetic_out,
                                                     batch_size = 256,
                                                     epochs = 2,
                                                     callbacks = [LambdaCallback(on_epoch_end=self._lyrics_per_epoch)] )
@@ -203,6 +210,26 @@ class simpleRNN:
             self._model['title_model'].save(pt.join(save_model, "title_model.h5"))
             self._model['lyric_model'].save(pt.join(save_model, "lyric_model.h5"))
         return
+
+    def _generateSynthetic(self):
+
+        num_songs = 126
+        max_song_len = 595
+        synthetic_in, synthetic_out = [], []
+        songs = []
+
+        print(len(self._raw_data))
+        for song in self._raw_data:
+            songindx = [self.word2idx(x) for x in song['title']]
+            for line in song['lyrics']:
+                songindx += [self.word2idx(x) for x in line]
+            # max_song_len = max(max_song_len, len(songindx))
+            songs.append(songindx + [0] * (max_song_len - len(songindx)))
+
+        ## OK. Now songs contains 126 entries (1 per song, where each entry has the max len of song)
+        synthetic_in = np.asarray(songs)
+        synthetic_out = np.asarray(songs)
+        return synthetic_in, synthetic_out
 
     def _title_per_epoch(self, epoch, _):
         self._logger.debug("pinkySpeaker.lib.model.simpleRNN._title_per_epoch()")
