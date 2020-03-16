@@ -33,7 +33,7 @@ def configArgs():
 					required = False, 
 					help = "Base path of models")
 	p.add_argument('-ps', '--plot_samples', default = "", 
-					required = False, 
+					required = False, choices = ["show", "save"],
 					help = "Plot length of data samples")
 	p.add_argument('-dbg', '--debug', default = False, 
 					required = False, action = 'store_true',
