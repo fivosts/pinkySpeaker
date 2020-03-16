@@ -37,8 +37,6 @@ def plotSamples(data, stream_out):
     for leng, freq in ordered_list:
         plot_list[0]['y'][0][int(leng / chunk_size)] += freq
 
-    print(plot_list[0]['x'][0])
-
     plt.plot_bars(plot_list,show_file = True, 
                             save_file = False,
                             bar_annotations = True,
@@ -151,5 +149,5 @@ def fetchData(artist_path_list, plot_sample):
     if plot_sample:
         plotSamples(data, plot_sample)
     print(plot_sample)
-    sys.exit(1)
+
     return data
