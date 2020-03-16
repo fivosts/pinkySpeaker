@@ -29,6 +29,8 @@ class simpleRNN:
         self._dataset = None
         self._model = None
 
+        self._lyric_sequence_length = 320
+
         if data:
             self._initArchitecture(data)
         self._logger.info("SimpleRNN model")
@@ -103,12 +105,11 @@ class simpleRNN:
         self._logger.debug("pinkySpeaker.lib.model.simpleRNN._initLyricModel()")
 
         vocab_size, embedding_size = weights.shape
-        sequence_length = 320
-        
+
         tm = Sequential()
         tm.add(Embedding(input_dim=vocab_size, output_dim=embedding_size, trainable = False, weights=[weights]))
-        tm.add(LSTM(units=2*embedding_size, input_shape = (sequence_length, embedding_size), return_sequences=True))
-        tm.add(LSTM(units=2*embedding_size, input_shape = (sequence_length, 2*embedding_size), return_sequences = True))
+        tm.add(LSTM(units=2*embedding_size, input_shape = (self._lyric_sequence_length, embedding_size), return_sequences=True))
+        tm.add(LSTM(units=2*embedding_size, input_shape = (self._lyric_sequence_length, 2*embedding_size), return_sequences = True))
         # tm.add(Flatten())
         tm.add(TimeDistributed(Dense(units=vocab_size, activation = 'softmax')))
         # tm.add(Flatten())
@@ -155,8 +156,8 @@ class simpleRNN:
                      'output': np.zeros([all_titles_length], dtype=np.int32)}
 
         index = 0
-        lyric_input = []
-        lyric_expected_output = []
+        lyric_inputs = []
+        lyric_expected_outputs = []
         
         for song in raw_data:
             for curr_sent_size in range(len(song['title']) - 1):
@@ -167,19 +168,34 @@ class simpleRNN:
 
             # flat_song = [song['title']] + song['lyrics']
             # flat_song = [" ".join(x) for x in [song['title']] + song['lyrics']]
-            flat_song = " ".join([" ".join(x) for x in song['lyrics']]).split()
-            for indx in range(len(flat_song) - 4):
-                lyric_input.append([self.word2idx(x) for x in flat_song[indx : indx + 4]])
-                lyric_expected_output.append(self.word2idx(flat_song[indx + 4]))
+
+            l_in, l_out = self._splitSongtoSentence(" ".join([" ".join(x) for x in ([song['title']] + song['lyrics'])]).split())
+
+            lyric_inputs += l_in
+            lyric_expected_outputs += l_out
+
+            # flat_song = " ".join([" ".join(x) for x in song['lyrics']]).split()
+            # for indx in range(len(flat_song) - 4):
+            #     lyric_inputs.append([self.word2idx(x) for x in flat_song[indx : indx + 4]])
+            #     lyric_expected_outputs.append(self.word2idx(flat_song[indx + 4]))
 
 
-        lyric_set = {'input': np.zeros([len(lyric_input), 4], dtype=np.int32), 
-                     'output': np.zeros([len(lyric_input)], dtype=np.int32)}
+        lyric_set = {'input': np.zeros([len(lyric_inputs), 4], dtype=np.int32), 
+                     'output': np.zeros([len(lyric_inputs)], dtype=np.int32)}
 
-        lyric_set['input'] = np.asarray(lyric_input, dtype = np.int32)
-        lyric_set['output'] = np.asarray(lyric_expected_output, dtype = np.int32)
+        lyric_set['input'] = np.asarray(lyric_inputs, dtype = np.int32)
+        lyric_set['output'] = np.asarray(lyric_expected_outputs, dtype = np.int32)
 
         return title_set, lyric_set
+
+    def _splitSongtoSentence(self, song_list):
+        self._logger.debug("pinkySpeaker.lib.model.simpleRNN._splitSongtoSentence()")
+        
+        print(song_list)
+        # TODO
+        exit(1)
+
+        return l_in, l_out
 
     def word2idx(self, word):
         self._logger.debug("pinkySpeaker.lib.model.simpleRNN.word2idx()")
@@ -191,11 +207,11 @@ class simpleRNN:
     def fit(self, save_model = None):
         self._logger.debug("pinkySpeaker.lib.model.simpleRNN.fit()")
 
-        # title_hist = self._model['title_model'].fit(self._dataset['title_model']['input'], 
-        #                                             self._dataset['title_model']['output'],
-        #                                             batch_size = 128,
-        #                                             epochs = 2,
-        #                                             callbacks = [LambdaCallback(on_epoch_end=self._title_per_epoch)] )
+        title_hist = self._model['title_model'].fit(self._dataset['title_model']['input'], 
+                                                    self._dataset['title_model']['output'],
+                                                    batch_size = 128,
+                                                    epochs = 2,
+                                                    callbacks = [LambdaCallback(on_epoch_end=self._title_per_epoch)] )
 
         print(self._dataset['lyric_model']['input'])
         print(self._dataset['lyric_model']['input'].shape)
