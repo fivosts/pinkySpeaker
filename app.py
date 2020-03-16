@@ -32,6 +32,9 @@ def configArgs():
 	p.add_argument('-mp', '--modelpath', default = "./model", 
 					required = False, 
 					help = "Base path of models")
+	p.add_argument('-ps', '--plot_samples', default = "", 
+					required = False, 
+					help = "Plot length of data samples")
 	p.add_argument('-dbg', '--debug', default = False, 
 					required = False, action = 'store_true',
 					help = "Enable DEBUG information")
@@ -56,7 +59,7 @@ def main():
 	if args.mode == "train":
 		logger.info("Selected training of language model.")
 		artist_list = [os.path.join(args.datapath, x.lower()) for x in args.train]
-		dataset = dl.fetchData(artist_list)
+		dataset = dl.fetchData(artist_list, args.plot_samples)
 		model = m.simpleRNN(data = dataset)
 		model.fit(save_model = args.modelpath)
 	else:
