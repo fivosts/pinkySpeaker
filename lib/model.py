@@ -103,10 +103,12 @@ class simpleRNN:
         self._logger.debug("pinkySpeaker.lib.model.simpleRNN._initLyricModel()")
 
         vocab_size, embedding_size = weights.shape
+        sequence_length = 320
+        
         tm = Sequential()
         tm.add(Embedding(input_dim=vocab_size, output_dim=embedding_size, trainable = False, weights=[weights]))
-        tm.add(LSTM(units=2*embedding_size, input_shape = (55, embedding_size), return_sequences=True))
-        tm.add(LSTM(units=2*embedding_size, input_shape = (55, 2*embedding_size), return_sequences = True))
+        tm.add(LSTM(units=2*embedding_size, input_shape = (sequence_length, embedding_size), return_sequences=True))
+        tm.add(LSTM(units=2*embedding_size, input_shape = (sequence_length, 2*embedding_size), return_sequences = True))
         # tm.add(Flatten())
         tm.add(TimeDistributed(Dense(units=vocab_size, activation = 'softmax')))
         # tm.add(Flatten())
