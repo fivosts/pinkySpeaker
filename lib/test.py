@@ -1,48 +1,30 @@
-from numpy import array
-import numpy as np
 from keras.models import Sequential
-from keras.layers import Dense
-from keras.layers import TimeDistributed
-from keras.layers.embeddings import Embedding
-from keras.layers import LSTM
-from keras.callbacks import LambdaCallback
-# prepare sequence
+from keras.layers import LSTM, Dense, TimeDistributed
+from keras.utils import to_categorical
+import numpy as np
 
-## i.e. samples
-num_songs = 126
-
-## i.e. num of timesteps 
-max_len_songs = 25
-
-## i.e. features
-vocab_size = 2917
-
-embedding_size = 300
-
-X = np.zeros((num_songs, max_len_songs))
-y = np.ones((num_songs, max_len_songs, vocab_size))
-
-print(X.shape)
-print(y.shape)
-
-# print(X1)
-# define LSTM configuration
-n_batch = 16
-n_epoch = 20
-# create LSTM
 model = Sequential()
-model.add(Embedding(input_dim = vocab_size, trainable = False, output_dim = embedding_size))
-model.add(LSTM(2*embedding_size, input_shape=(max_len_songs, embedding_size), return_sequences=True))
-model.add(LSTM(2*embedding_size, input_shape=(max_len_songs, 2*embedding_size), return_sequences=True))
-model.add(TimeDistributed(Dense(vocab_size, activation = 'softmax')))
-model.compile(loss='mean_squared_error', optimizer='adam')
-print(model.summary())
-# train LSTM
-model.fit(X, y, epochs=n_epoch, batch_size=n_batch)
-# evaluate
-result = model.predict(X, batch_size=n_batch, verbose=0)
-for value in result[0,:,0]:
-	print('%.1f' % value)
 
+model.add(LSTM(32, return_sequences=True, input_shape=(None, 5)))
+model.add(LSTM(8, return_sequences=True))
+model.add(TimeDistributed(Dense(2, activation='sigmoid')))
 
+print(model.summary(90))
 
+model.compile(loss='categorical_crossentropy',
+              optimizer='adam')
+
+def train_generator():
+    while True:
+        sequence_length = np.random.randint(10, 100)
+        x_train = np.random.random((1000, sequence_length, 5))
+        # y_train will depend on past 5 timesteps of x
+        y_train = x_train[:, :, 0]
+        for i in range(1, 5):
+            y_train[:, i:] += x_train[:, :-i, i]
+        y_train = to_categorical(y_train > 2.5)
+        print(x_train.shape)
+        print(y_train.shape)
+        yield x_train, y_train
+
+model.fit_generator(train_generator(), steps_per_epoch=30, epochs=10, verbose=1)
