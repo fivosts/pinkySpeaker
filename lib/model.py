@@ -166,8 +166,6 @@ class simpleRNN:
                      }   
 
         index = 0
-        # lyric_inputs = 
-        # lyric_expected_outputs = 
         
         for songIdx, song in enumerate(raw_data):
             for curr_sent_size in range(len(song['title']) - 1):
@@ -176,17 +174,11 @@ class simpleRNN:
                     title_set['output'][index] = self.word2idx(song['title'][current_index + 1])
                 index += 1
 
-            # flat_song = [song['title']] + song['lyrics']
-            # flat_song = [" ".join(x) for x in [song['title']] + song['lyrics']]
-
             l_in, l_out = self._splitSongtoSentence(" ".join([" ".join(x) for x in ([song['title']] + song['lyrics'])]).split())
 
-            # For loop is ok
             for inp, out in zip(l_in, l_out):
                 # print(np.asarray([self.word2idx(x) for x in inp]))
                 # print(np.asarray([self.word2idx(x) for x in out]))
-
-                ## Lyric inputs are ok
                 lyric_set['input'][songIdx] = np.asarray([self.word2idx(x) for x in inp])
                 lyric_set['output'][songIdx] = self._softmax(np.asarray([self.idx2onehot(self.word2idx(x), vocab_size) for x in out]))
 
@@ -211,23 +203,9 @@ class simpleRNN:
             #     lyric_inputs.append([self.word2idx(x) for x in flat_song[indx : indx + 4]])
             #     lyric_expected_outputs.append(self.word2idx(flat_song[indx + 4]))
 
-        # print(" ".join([self.idx2word(int(x)) for x in lyric_inputs[0]]))
-        # print(" ".join([self.idx2word(np.argmax(x)) for x in lyric_expected_outputs[0]]))
-        # exit(1)
-
 
         print(lyric_set['input'].shape)
         print(lyric_set['output'].shape)
-
-
-
-
-        # print(" ".join([self.idx2word(int(x)) for x in lyric_set['input'][10]]))
-        # print(" ".join([self.idx2word(np.argmax(x)) for x in lyric_set['output'][10]]))
-        # exit(1)
-
-        # lyric_set['input'] = np.asarray(lyric_inputs, dtype = np.int32)
-        # lyric_set['output'] = np.asarray(lyric_expected_outputs, dtype = np.int32)
 
         return title_set, lyric_set
 
