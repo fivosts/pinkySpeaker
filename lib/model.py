@@ -235,18 +235,6 @@ class simpleRNN:
         # Works fine!
         return l_in, l_out
 
-    def _dtLyricGenerator(self):
-
-        while True:
-            sequence_length = np.random.randint(10, 100)
-            x_train = np.random.random((1000, sequence_length, 5))
-            # y_train will depend on past 5 timesteps of x
-            y_train = x_train[:, :, 0]
-            for i in range(1, 5):
-                y_train[:, i:] += x_train[:, :-i, i]
-            y_train = to_categorical(y_train > 2.5)
-            yield x_train, y_train
-
     def word2idx(self, word):
         self._logger.debug("pinkySpeaker.lib.model.simpleRNN.word2idx()")
         return self._model['word_model'].wv.vocab[word].index
