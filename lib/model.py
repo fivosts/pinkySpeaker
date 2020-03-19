@@ -338,8 +338,6 @@ class simpleRNN:
         # print(text)
         for i in range(num_generated):
             prediction = model.predict(x=np.array(word_idxs))
-            # print(prediction.shape)
-            # print(prediction[-1][0].shape)
             max_cl = 0
             max_indx = 0
             for ind, item in enumerate(prediction[-1][0]):
@@ -347,14 +345,7 @@ class simpleRNN:
                     max_cl = item
                     max_indx = ind
 
-
-            # print(self.idx2word(max_indx))
-            # print(max_indx)
             idx = self._sample(prediction[-1][0], temperature=0.7)
-            if idx == 0:
-                print("WARNING!!!\n\n\n\n\n\n\n\n\n\n")
-            if self.idx2word(idx) == "endfile":
-                print("EDNFILLLELELELELLE \n\n\n\n\n\n\n")
             word_idxs.append(idx)
             if (title == True and (self.idx2word(idx) == "endline" or self.idx2word(idx) == "endfile")) or (title == False and self.idx2word(idx) == "endfile"):
                 break
