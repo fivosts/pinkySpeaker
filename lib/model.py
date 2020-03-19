@@ -167,8 +167,13 @@ class simpleRNN:
 
         index = 0
         
+        ## Iterate over each song. Keep index
         for songIdx, song in enumerate(raw_data):
+
+            ## Iterate over length of current song
             for curr_sent_size in range(len(song['title']) - 1):
+                
+                ## Traverse all indices until current index ( + 1 exists in the range to grab the next one as a target)
                 for current_index in range(curr_sent_size + 1):
                     title_set['input'][index][(max_title_length - 1) - curr_sent_size + current_index] = self.word2idx(song['title'][current_index])
                     title_set['output'][index] = self.word2idx(song['title'][current_index + 1])
