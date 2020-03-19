@@ -155,12 +155,19 @@ class simpleRNN:
     def _constructTLSet(self, raw_data, vocab_size, max_title_length, all_titles_length):
         self._logger.debug("pinkySpeaker.lib.model.simpleRNN._constructTLSet()")
 
-        title_set = {'input': np.zeros([all_titles_length, max_title_length], dtype=np.int32), 
-                     'output': np.zeros([all_titles_length], dtype=np.int32)}
+        title_set = {
+                     'input': np.zeros([all_titles_length, max_title_length], dtype=np.int32), 
+                     'output': np.zeros([all_titles_length], dtype=np.int32)
+                     }
+
+        lyric_set = {
+                     'input': np.zeros([len(raw_data), self._lyric_sequence_length]), 
+                     'output': np.zeros([len(raw_data), self._lyric_sequence_length, vocab_size])
+                     }   
 
         index = 0
-        lyric_inputs = np.zeros([len(raw_data), self._lyric_sequence_length])
-        lyric_expected_outputs = np.zeros([len(raw_data), self._lyric_sequence_length, vocab_size])
+        # lyric_inputs = 
+        # lyric_expected_outputs = 
         
         for idx, song in enumerate(raw_data):
             for curr_sent_size in range(len(song['title']) - 1):
@@ -180,8 +187,8 @@ class simpleRNN:
                 # print(np.asarray([self.word2idx(x) for x in out]))
 
                 ## Lyric inputs are ok
-                lyric_inputs[idx] = np.asarray([self.word2idx(x) for x in inp])
-                lyric_expected_outputs[idx] = self._softmax(np.asarray([self.idx2onehot(self.word2idx(x), vocab_size) for x in out]))
+                lyric_set['input'][idx] = np.asarray([self.word2idx(x) for x in inp])
+                lyric_set['output'][idx] = self._softmax(np.asarray([self.idx2onehot(self.word2idx(x), vocab_size) for x in out]))
 
 
                 # print(self._softmax(np.asarray([self.idx2onehot(self.word2idx(x), vocab_size) for x in out])))
@@ -209,11 +216,10 @@ class simpleRNN:
         # exit(1)
 
 
-        print(lyric_inputs.shape)
-        print(lyric_expected_outputs.shape)
+        print(lyric_set['input'].shape)
+        print(lyric_set['output'].shape)
 
-        lyric_set = {'input': lyric_inputs, 
-                     'output': lyric_expected_outputs}
+
 
 
         # print(" ".join([self.idx2word(int(x)) for x in lyric_set['input'][10]]))
