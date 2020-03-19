@@ -166,20 +166,21 @@ class simpleRNN:
         ## Iterate over each song. Keep index
         for songIdx, song in enumerate(raw_data):
 
+        	song_title = song['title']
             ## Iterate over length of current song
-            for curr_sent_size in range(len(song['title']) - 1):
+            for curr_sent_size in range(len(song_title) - 1):
                 
                 ## Traverse all indices until current index ( + 1 exists in the range to grab the next one as a target)
                 for current_index in range(curr_sent_size + 1):
-                    title_set['input'][title_sample_index][(max_title_length - 1) - curr_sent_size + current_index] = self.word2idx(song['title'][current_index])
-                    title_set['output'][title_sample_index] = self.word2idx(song['title'][current_index + 1])
+                    title_set['input'][title_sample_index][(max_title_length - 1) - curr_sent_size + current_index] = self.word2idx(song_title[current_index])
+                    title_set['output'][title_sample_index] = self.word2idx(song_title[current_index + 1])
                 title_sample_index += 1
 
             ## At this point, title_set has been constructed.
 
             ## We need a fixed sequence length. The next function will grab a song and will return NN inputs and targets, sized _lyric_sequence_length
             ## If the song is bigger than this, multiple pairs of inputs/target will be returned.
-            l_in, l_out = self._splitSongtoSentence(" ".join([" ".join(x) for x in ([song['title']] + song['lyrics'])]).split())
+            l_in, l_out = self._splitSongtoSentence(" ".join([" ".join(x) for x in ([song_title] + song['lyrics'])]).split())
 
             ## For each input/target pair...
             for inp, out in zip(l_in, l_out):
@@ -188,8 +189,11 @@ class simpleRNN:
                 ## And convert target str tokens to indices. Indices to one hot vecs vocab_size sized. Pass one-hot vecs through softmax to construct final target
                 lyric_set['output'][songIdx] = self._softmax(np.asarray([self.idx2onehot(self.word2idx(x), vocab_size) for x in out]))
 
-        print(lyric_set['input'].shape)
-        print(lyric_set['output'].shape)
+        self._logger.debug("Title Input tensor dimensions: {}".format(title_set['input'].shape))
+        self._logger.debug("Title Target tensor dimensions: {}".format(title_set['output'].shape))
+
+        self._logger.debug("Lyric Input tensor dimensions: {}".format(lyric_set['input'].shape))
+        self._logger.debug("Lyric Target tensor dimensions: {}".format(lyric_set['output'].shape))
 
         return title_set, lyric_set
 
