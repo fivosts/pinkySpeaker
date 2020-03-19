@@ -84,6 +84,7 @@ class simpleRNN:
 
     def _initWordModel(self, inp_sentences):
         self._logger.debug("pinkySpeaker.lib.model.simpleRNN._initWordModel()")
+        inp_sentences.append(["MASK_TOKEN"]) # Token that ensembles masking of training weights. Used to pad sequence length
         wm = gensim.models.Word2Vec(inp_sentences, size = 300, min_count = 1, window = 4, iter = 200)
         self._logger.info("Word2Vec word model initialized")
         return wm
@@ -167,7 +168,7 @@ class simpleRNN:
         ## Iterate over each song. Keep index
         for songIdx, song in enumerate(raw_data):
 
-        	song_title = song['title']
+            song_title = song['title']
             ## Iterate over length of current song
             for curr_sent_size in range(len(song_title) - 1):
                 
@@ -234,11 +235,11 @@ class simpleRNN:
     def fit(self, save_model = None):
         self._logger.debug("pinkySpeaker.lib.model.simpleRNN.fit()")
 
-        title_hist = self._model['title_model'].fit(self._dataset['title_model']['input'], 
-                                                    self._dataset['title_model']['output'],
-                                                    batch_size = 128,
-                                                    epochs = 2,
-                                                    callbacks = [LambdaCallback(on_epoch_end=self._title_per_epoch)] )
+        # title_hist = self._model['title_model'].fit(self._dataset['title_model']['input'], 
+        #                                             self._dataset['title_model']['output'],
+        #                                             batch_size = 128,
+        #                                             epochs = 2,
+        #                                             callbacks = [LambdaCallback(on_epoch_end=self._title_per_epoch)] )
 
         lyric_hist = self._model['lyric_model'].fit(self._dataset['lyric_model']['input'],
                                                     self._dataset['lyric_model']['output'],
@@ -306,7 +307,7 @@ class simpleRNN:
             prediction = model.predict(x=np.array(word_idxs))
             max_cl = 0
             max_indx = 0
-            for ind, item in enumerate(prediction[-1][0]):
+            for ind, item in enumerate(prediction[-1][0]):  ## TODO plz fix this for title model
                 if item > max_cl:
                     max_cl = item
                     max_indx = ind
@@ -317,7 +318,7 @@ class simpleRNN:
             if (title == True and (self.idx2word(idx) == "endline" or self.idx2word(idx) == "endfile")) or (title == False and self.idx2word(idx) == "endfile"):
                 break
             else:
-            	pass
+                pass
                 # if self.idx2word(idx) == "endline":
                 #     K.set_value(model.layers[-2].weights[1][self.word2idx("endline")], init_endline_bias)
 
