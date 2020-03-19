@@ -161,8 +161,9 @@ class simpleRNN:
                      }
 
         lyric_set = {
-                     'input': np.zeros([len(raw_data), self._lyric_sequence_length]), 
-                     'output': np.zeros([len(raw_data), self._lyric_sequence_length, vocab_size])
+                     'input': np.zeros([len(raw_data), self._lyric_sequence_length], dtype = np.int32),
+                     # lyric target will be the output of a softmax, i.e. a float and should be considered as such.
+                     'output': np.zeros([len(raw_data), self._lyric_sequence_length, vocab_size], dtype = np.float64) 
                      }   
 
         title_sample_index = 0
