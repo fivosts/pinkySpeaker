@@ -169,7 +169,7 @@ class simpleRNN:
         # lyric_inputs = 
         # lyric_expected_outputs = 
         
-        for idx, song in enumerate(raw_data):
+        for songIdx, song in enumerate(raw_data):
             for curr_sent_size in range(len(song['title']) - 1):
                 for current_index in range(curr_sent_size + 1):
                     title_set['input'][index][(max_title_length - 1) - curr_sent_size + current_index] = self.word2idx(song['title'][current_index])
@@ -187,8 +187,8 @@ class simpleRNN:
                 # print(np.asarray([self.word2idx(x) for x in out]))
 
                 ## Lyric inputs are ok
-                lyric_set['input'][idx] = np.asarray([self.word2idx(x) for x in inp])
-                lyric_set['output'][idx] = self._softmax(np.asarray([self.idx2onehot(self.word2idx(x), vocab_size) for x in out]))
+                lyric_set['input'][songIdx] = np.asarray([self.word2idx(x) for x in inp])
+                lyric_set['output'][songIdx] = self._softmax(np.asarray([self.idx2onehot(self.word2idx(x), vocab_size) for x in out]))
 
 
                 # print(self._softmax(np.asarray([self.idx2onehot(self.word2idx(x), vocab_size) for x in out])))
