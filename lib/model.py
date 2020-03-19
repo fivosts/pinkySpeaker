@@ -287,6 +287,7 @@ class simpleRNN:
             self._model['lyric_model'].save(pt.join(save_model, "lyric_model.h5"))
         return
 
+    ## Booting callback on title generation between epochs
     def _title_per_epoch(self, epoch, _):
         self._logger.debug("pinkySpeaker.lib.model.simpleRNN._title_per_epoch()")
 
@@ -307,6 +308,7 @@ class simpleRNN:
             print('%s... -> %s' % (text, _sample))
         return
 
+    ## Booting callback on lyric generation between epochs
     def _lyrics_per_epoch(self, epoch, _):
         self._logger.debug("pinkySpeaker.lib.model.simpleRNN._lyrics_per_epoch()")
 
@@ -326,6 +328,7 @@ class simpleRNN:
             print('%s... -> %s' % (text, sample))
         return
 
+    ## Model sampling setup function
     def _generate_next(self, text, model, title, num_generated=320):
         self._logger.debug("pinkySpeaker.lib.model.simpleRNN._generate_next()")
 
@@ -371,7 +374,7 @@ class simpleRNN:
 
         return ' '.join(self.idx2word(idx) for idx in word_idxs)
 
-
+    ## Take prediction vector, return the index of most likely class
     def _sample(self, preds, temperature=1.0):
         self._logger.debug("pinkySpeaker.lib.model.simpleRNN._sample()")
 
