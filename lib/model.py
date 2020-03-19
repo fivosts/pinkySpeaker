@@ -165,8 +165,7 @@ class simpleRNN:
                      'output': np.zeros([len(raw_data), self._lyric_sequence_length, vocab_size])
                      }   
 
-        index = 0
-        
+        title_sample_index = 0
         ## Iterate over each song. Keep index
         for songIdx, song in enumerate(raw_data):
 
@@ -175,9 +174,9 @@ class simpleRNN:
                 
                 ## Traverse all indices until current index ( + 1 exists in the range to grab the next one as a target)
                 for current_index in range(curr_sent_size + 1):
-                    title_set['input'][index][(max_title_length - 1) - curr_sent_size + current_index] = self.word2idx(song['title'][current_index])
-                    title_set['output'][index] = self.word2idx(song['title'][current_index + 1])
-                index += 1
+                    title_set['input'][title_sample_index][(max_title_length - 1) - curr_sent_size + current_index] = self.word2idx(song['title'][current_index])
+                    title_set['output'][title_sample_index] = self.word2idx(song['title'][current_index + 1])
+                title_sample_index += 1
 
             ## At this point, title_set has been constructed.
 
