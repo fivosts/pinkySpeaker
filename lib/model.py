@@ -113,11 +113,7 @@ class simpleRNN:
         lm.add(Embedding(input_dim=vocab_size, output_dim=embedding_size, trainable = False, weights=[weights]))
         lm.add(LSTM(units=2*embedding_size, input_shape = (None, embedding_size), return_sequences=True))
         lm.add(LSTM(units=2*embedding_size, input_shape = (None, 2*embedding_size), return_sequences = True))
-        # tm.add(Flatten())
         lm.add(TimeDistributed(Dense(units=vocab_size, activation = 'softmax')))
-        # tm.add(Flatten())
-        # tm.add(Dense(units = vocab_size, activation = 'softmax'))
-        # tm.add(Activation('softmax'))
         lm.compile(optimizer='adam', loss='categorical_crossentropy')
         self._logger.info("Lyric model initialized")
         self._logger.info(lm.summary())
@@ -191,28 +187,6 @@ class simpleRNN:
                 lyric_set['input'][songIdx] = np.asarray([self.word2idx(x) for x in inp])
                 ## And convert target str tokens to indices. Indices to one hot vecs vocab_size sized. Pass one-hot vecs through softmax to construct final target
                 lyric_set['output'][songIdx] = self._softmax(np.asarray([self.idx2onehot(self.word2idx(x), vocab_size) for x in out]))
-
-
-                # print(self._softmax(np.asarray([self.idx2onehot(self.word2idx(x), vocab_size) for x in out])))
-                # print(self._softmax(np.asarray([self.idx2onehot(0, vocab_size) for x in out])))
-                # lyric_inputs += np.asarray([self.word2idx(x) for x in inp])
-                # lyric_expected_outputs += np.asarray([self.word2idx(x) for x in out])
-
-            # lyric_inputs.append(np.asarray([self.word2idx(x) for x in l_in]))
-            # lyric_expected_outputs.append(np.asarray([self.word2idx(x) for x in l_out]))
-
-            # flat_song = " ".join([" ".join([self.word2idx(token) for token in line]) for line in song['lyrics']]).split()
-            # ind_song = " ".join([ " ".join([self.word2idx(token) for token in line]) for line in song['lyrics']]).split()
-            # ind_song = [self.word2idx(tok) for line in [song['title']] + song['lyrics'] for tok in line]
-
-            # lyric_inputs.append(np.asarray(ind_song[:-1]))
-            # lyric_expected_outputs.append( np.asarray([ self.idx2onehot(x, 2917) for x in ind_song[1:] ]))
-
-
-            # for indx in range(len(flat_song) - 4):
-            #     lyric_inputs.append([self.word2idx(x) for x in flat_song[indx : indx + 4]])
-            #     lyric_expected_outputs.append(self.word2idx(flat_song[indx + 4]))
-
 
         print(lyric_set['input'].shape)
         print(lyric_set['output'].shape)
