@@ -197,7 +197,9 @@ class simpleRNN:
 
         return title_set, lyric_set
 
+    ## Receives an input tensor and returns an elem-by-elem softmax computed vector of the same dims
     def _softmax(self, inp_tensor):
+        self._logger.debug("pinkySpeaker.lib.model.simpleRNN._softmax()")
         m = np.max(inp_tensor)
         e = np.exp(inp_tensor - m)
         return e / np.sum(e)
@@ -210,21 +212,24 @@ class simpleRNN:
         l_in[-1] += ['endfile'] * (self._lyric_sequence_length - len(l_in[-1]))
         l_out[-1] += ['endfile'] * (self._lyric_sequence_length - len(l_out[-1]))
 
-        # Works fine!
         return l_in, l_out
 
+    ## Receive a word, return the index in the vocabulary
     def word2idx(self, word):
         self._logger.debug("pinkySpeaker.lib.model.simpleRNN.word2idx()")
         return self._model['word_model'].wv.vocab[word].index
+    ## Receive a vocab index, return the workd
     def idx2word(self, idx):
         self._logger.debug("pinkySpeaker.lib.model.simpleRNN.idx2word()")
         return self._model['word_model'].wv.index2word[idx]
+    ## Receive a vocab index, return its one hot vector
     def idx2onehot(self, idx, size):
         self._logger.debug("pinkySpeaker.lib.model.simpleRNN.idx2onehot()")
         ret = np.zeros(size)
         ret[idx] = 1000
         return ret
 
+    ## Just do it!
     def fit(self, save_model = None):
         self._logger.debug("pinkySpeaker.lib.model.simpleRNN.fit()")
 
@@ -281,26 +286,6 @@ class simpleRNN:
             self._model['title_model'].save(pt.join(save_model, "title_model.h5"))
             self._model['lyric_model'].save(pt.join(save_model, "lyric_model.h5"))
         return
-
-    def _generateSynthetic(self):
-
-        num_songs = 126
-        max_song_len = 55
-        synthetic_in, synthetic_out = [], []
-        songs = []
-
-        # print(len(self._raw_data))
-        for song in self._raw_data:
-            songindx = [self.word2idx(x) for x in song['title']]
-            for line in song['lyrics']:
-                songindx += [self.word2idx(x) for x in line]
-            # max_song_len = max(max_song_len, len(songindx))
-            songs.append(songindx + [0] * (max_song_len - len(songindx)))
-
-        ## OK. Now songs contains 126 entries (1 per song, where each entry has the max len of song)
-        synthetic_in = np.asarray(songs)
-        synthetic_out = np.asarray(songs)
-        return synthetic_in, synthetic_out
 
     def _title_per_epoch(self, epoch, _):
         self._logger.debug("pinkySpeaker.lib.model.simpleRNN._title_per_epoch()")
