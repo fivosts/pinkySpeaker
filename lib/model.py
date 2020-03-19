@@ -335,7 +335,6 @@ class simpleRNN:
         word_idxs = [self.word2idx(word) for word in text.lower().split()]
         init_endline_bias = model.layers[-2].weights[1][self.word2idx("endline")]
         init_endfile_bias = model.layers[-2].weights[1][self.word2idx("endfile")]
-        # print(text)
         for i in range(num_generated):
             prediction = model.predict(x=np.array(word_idxs))
             max_cl = 0
@@ -347,6 +346,7 @@ class simpleRNN:
 
             idx = self._sample(prediction[-1][0], temperature=0.7)
             word_idxs.append(idx)
+            ## TODO make this simpler and shorter
             if (title == True and (self.idx2word(idx) == "endline" or self.idx2word(idx) == "endfile")) or (title == False and self.idx2word(idx) == "endfile"):
                 break
             else:
