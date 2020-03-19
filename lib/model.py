@@ -115,17 +115,10 @@ class simpleRNN:
         lm.add(LSTM(units=2*embedding_size, input_shape = (None, 2*embedding_size), return_sequences = True))
         lm.add(TimeDistributed(Dense(units=vocab_size, activation = 'softmax')))
         lm.compile(optimizer='adam', loss='categorical_crossentropy')
-        
+
         self._logger.info("Lyric model initialized")
         self._logger.info(lm.summary())
         return lm
-
-    def _listToChunksList(self, lst, n):
-        self._logger.debug("pinkySpeaker.lib.model.simpleRNN._listToChunksList()")
-        chunk_list = []
-        for i in range(0, len(lst), n):
-            chunk_list.append(lst[i: i + n])
-        return chunk_list
 
     def _constructSentences(self, raw_data):
         self._logger.debug("pinkySpeaker.lib.model.simpleRNN._constructSentences()")
@@ -148,6 +141,13 @@ class simpleRNN:
                 for word in sent:
                     words.append(word)
         return self._listToChunksList(words, sentence_size), max_title_length, all_titles_length
+
+    def _listToChunksList(self, lst, n):
+        self._logger.debug("pinkySpeaker.lib.model.simpleRNN._listToChunksList()")
+        chunk_list = []
+        for i in range(0, len(lst), n):
+            chunk_list.append(lst[i: i + n])
+        return chunk_list
 
     def _constructTLSet(self, raw_data, vocab_size, max_title_length, all_titles_length):
         self._logger.debug("pinkySpeaker.lib.model.simpleRNN._constructTLSet()")
