@@ -115,6 +115,7 @@ class simpleRNN:
         lm.add(LSTM(units=2*embedding_size, input_shape = (None, 2*embedding_size), return_sequences = True))
         lm.add(TimeDistributed(Dense(units=vocab_size, activation = 'softmax')))
         lm.compile(optimizer='adam', loss='categorical_crossentropy')
+        
         self._logger.info("Lyric model initialized")
         self._logger.info(lm.summary())
         return lm
@@ -229,49 +230,15 @@ class simpleRNN:
         ret[idx] = 1000
         return ret
 
-    ## Just do it!
+    ## Just fit it!
     def fit(self, save_model = None):
         self._logger.debug("pinkySpeaker.lib.model.simpleRNN.fit()")
 
-        # title_hist = self._model['title_model'].fit(self._dataset['title_model']['input'], 
-        #                                             self._dataset['title_model']['output'],
-        #                                             batch_size = 128,
-        #                                             epochs = 2,
-        #                                             callbacks = [LambdaCallback(on_epoch_end=self._title_per_epoch)] )
-
-        # lyric_hist = self._model['lyric_model'].fit(test_in,
-        #                                             test_out,
-        #                                             batch_size = 4,
-        #                                             epochs = 2,
-        #                                             callbacks = [LambdaCallback(on_epoch_end=self._lyrics_per_epoch)] )
-
-
-        # print("START")
-        # test_indx = 80
-        # print(self._dataset['lyric_model']['input'][test_indx].shape)
-        # print(self._dataset['lyric_model']['output'][test_indx].shape)
-        # # print(self._dataset['lyric_model']['input'][test_indx])
-        # print(" ".join([self.idx2word(int(x)) for x in self._dataset['lyric_model']['input'][test_indx]]))
-        # # print(self._dataset['lyric_model']['output'][test_indx])
-        # temp_list = []
-        # for token_vec in self._dataset['lyric_model']['output'][test_indx]:
-        #     print(token_vec.shape)
-        #     temp_list.append(self.idx2word(self._sample(token_vec)))
-        # print(" ".join(temp_list))
-
-        # print(" ".join([self.idx2word(int(x)) for x in self._dataset['lyric_model']['input'][80]]))
-        # print(" ".join([self.idx2word(np.argmax(x)) for x in self._dataset['lyric_model']['output'][80]]))
-
-        # for id in range(126):
-        #     print("YAY")
-        #     x = [self.idx2word(int(x)) for x in self._dataset['lyric_model']['input'][id]]
-        #     y = [self.idx2word(np.argmax(x)) for x in self._dataset['lyric_model']['output'][id]]
-        #     for i in range(319):
-        #         assert(x[i + 1] == y[i])
-
-        # exit(1)
-
-
+        title_hist = self._model['title_model'].fit(self._dataset['title_model']['input'], 
+                                                    self._dataset['title_model']['output'],
+                                                    batch_size = 128,
+                                                    epochs = 2,
+                                                    callbacks = [LambdaCallback(on_epoch_end=self._title_per_epoch)] )
 
         lyric_hist = self._model['lyric_model'].fit(self._dataset['lyric_model']['input'],
                                                     self._dataset['lyric_model']['output'],
