@@ -179,12 +179,17 @@ class simpleRNN:
                     title_set['output'][index] = self.word2idx(song['title'][current_index + 1])
                 index += 1
 
+            ## At this point, title_set has been constructed.
+
+            ## We need a fixed sequence length. The next function will grab a song and will return NN inputs and targets, sized _lyric_sequence_length
+            ## If the song is bigger than this, multiple pairs of inputs/target will be returned.
             l_in, l_out = self._splitSongtoSentence(" ".join([" ".join(x) for x in ([song['title']] + song['lyrics'])]).split())
 
+            ## For each input/target pair...
             for inp, out in zip(l_in, l_out):
-                # print(np.asarray([self.word2idx(x) for x in inp]))
-                # print(np.asarray([self.word2idx(x) for x in out]))
+                ## Convert str array to embed index tensor
                 lyric_set['input'][songIdx] = np.asarray([self.word2idx(x) for x in inp])
+                ## And convert target str tokens to indices. Indices to one hot vecs vocab_size sized. Pass one-hot vecs through softmax to construct final target
                 lyric_set['output'][songIdx] = self._softmax(np.asarray([self.idx2onehot(self.word2idx(x), vocab_size) for x in out]))
 
 
