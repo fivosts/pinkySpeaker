@@ -265,6 +265,18 @@ class simpleRNN:
         ret[idx] = 1000
         return ret
 
+    ## Converts "endline" to '\n' for pretty printing
+    ## Also masks meta-tokens but throws a warning
+    def _prettyPrint(self, text):
+        self._logger.debug("pinkySpeaker.lib.model.simpleRNN._prettyPrint()")
+
+        if self._startToken in text:
+            self._logger.warning("START_TOKEN has been found to generated text!")
+        elif self._maskToken in text:
+            self._logger.warning("MASK_TOKEN has been found to generated text!")
+
+        return text.replace("endline", "\n").replace("endfile", "\nEND")
+
     ## Just fit it!
     def fit(self, save_model = None):
         self._logger.debug("pinkySpeaker.lib.model.simpleRNN.fit()")
@@ -308,7 +320,7 @@ class simpleRNN:
             ]
         for text in texts:
             _sample = self._generate_next(text, self._model['title_model'], title = True)
-            self._logger.info('%s... -> %s' % (text, _sample))
+            self._logger.info('%s... -> %s' % (text, self.prettyPrint(_sample)))
         return
 
     ## Booting callback on lyric generation between epochs
@@ -328,7 +340,7 @@ class simpleRNN:
             ]
         for text in texts:
             _sample = self._generate_next(text, self._model['lyric_model'], title = False)
-            self._logger.info('%s... -> %s' % (text, _sample))
+            self._logger.info('%s... -> %s' % (text, self.prettyPrint(_sample)))
         return
 
     ## Model sampling setup function
