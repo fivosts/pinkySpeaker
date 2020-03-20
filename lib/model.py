@@ -33,6 +33,7 @@ class simpleRNN:
 
         self._lyric_sequence_length = 320
         self._maskToken = "MASK_TOKEN"
+        self._startToken = "START_TOKEN"
 
         if data:
             self._initArchitecture(data)
@@ -234,6 +235,8 @@ class simpleRNN:
     def _splitSongtoSentence(self, song_list):
         self._logger.debug("pinkySpeaker.lib.model.simpleRNN._splitSongtoSentence()")
         
+        song_list.insert(0, self._startToken)
+
         song_spl_inp = [song_list[x : min(len(song_list), x + self._lyric_sequence_length)] for x in range(0, len(song_list), self._lyric_sequence_length)]
         song_spl_out = [song_list[x + 1 : min(len(song_list), x + 1 + self._lyric_sequence_length)] for x in range(0, len(song_list), self._lyric_sequence_length)]
 
