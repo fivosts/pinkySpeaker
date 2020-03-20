@@ -294,7 +294,7 @@ class simpleRNN:
     def _title_per_epoch(self, epoch, _):
         self._logger.debug("pinkySpeaker.lib.model.simpleRNN._title_per_epoch()")
 
-        print('\nGenerating text after epoch: %d' % epoch)
+        self._logger.info('\nGenerating text after epoch: %d' % epoch)
         texts = [
                 'dark',
                 'dark side',
@@ -308,14 +308,14 @@ class simpleRNN:
             ]
         for text in texts:
             _sample = self._generate_next(text, self._model['title_model'], title = True)
-            print('%s... -> %s' % (text, _sample))
+            self._logger.info('%s... -> %s' % (text, _sample))
         return
 
     ## Booting callback on lyric generation between epochs
     def _lyrics_per_epoch(self, epoch, _):
         self._logger.debug("pinkySpeaker.lib.model.simpleRNN._lyrics_per_epoch()")
 
-        print('\nGenerating text after epoch: %d' % epoch)
+        self._logger.info('\nGenerating text after epoch: %d' % epoch)
         texts = [
                 'dark side',
                 'another brick in the wall',
@@ -327,8 +327,8 @@ class simpleRNN:
                 'comfortably numb'
             ]
         for text in texts:
-            sample = self._generate_next(text, self._model['lyric_model'], title = False)
-            print('%s... -> %s' % (text, sample))
+            _sample = self._generate_next(text, self._model['lyric_model'], title = False)
+            self._logger.info('%s... -> %s' % (text, _sample))
         return
 
     ## Model sampling setup function
@@ -350,22 +350,9 @@ class simpleRNN:
 
             idx = self._sample(samples, temperature=0.7)
             word_idxs.append(idx)
-            ## TODO make this simpler and shorter
-            if (title == True and (self.idx2word(idx) == "endline" or self.idx2word(idx) == "endfile")) or (title == False and self.idx2word(idx) == "endfile"):
-                break
-            else:
-                pass
-                # if self.idx2word(idx) == "endline":
-                #     K.set_value(model.layers[-2].weights[1][self.word2idx("endline")], init_endline_bias)
 
-                # if title == True:
-                #     b = 2
-                # else:
-                #     b = 0.2
-        #         K.set_value(model.layers[-2].weights[1][self.word2idx("endline")], model.layers[-2].weights[1][self.word2idx("endline")] + b*abs(model.layers[-2].weights[1][self.word2idx("endline")]))
-        #         K.set_value(model.layers[-2].weights[1][self.word2idx("endfile")], model.layers[-2].weights[1][self.word2idx("endfile")] + 0.4*abs(model.layers[-2].weights[1][self.word2idx("endfile")]))
-        # K.set_value(model.layers[-2].weights[1][self.word2idx("endline")], init_endline_bias)
-        # K.set_value(model.layers[-2].weights[1][self.word2idx("endfile")], init_endfile_bias)
+            if self.idx2word(idx) == "endfile" or (title and self.idx2word(idx) == "endline"):
+                break
 
         return ' '.join(self.idx2word(idx) for idx in word_idxs)
 
