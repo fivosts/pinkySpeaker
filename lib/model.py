@@ -94,6 +94,7 @@ class simpleRNN:
     def _initWordModel(self, inp_sentences):
         self._logger.debug("pinkySpeaker.lib.model.simpleRNN._initWordModel()")
         inp_sentences.append([self._maskToken]) # Token that ensembles masking of training weights. Used to pad sequence length
+        inp_sentences.append([self._startToken]) # Token that ensembles the start of a sequence
         wm = gensim.models.Word2Vec(inp_sentences, size = 300, min_count = 1, window = 4, iter = 200)
         self._logger.info("Word2Vec word model initialized")
         return wm
@@ -143,6 +144,7 @@ class simpleRNN:
         for i in range(vocab_size):
             clw[i] = 1
         clw[self.word2idx(self._maskToken)] = 0
+        clw[self.word2idx(self._startToken)] = 0
         return clw
 
     def _constructSentences(self, raw_data):
@@ -267,11 +269,11 @@ class simpleRNN:
     def fit(self, save_model = None):
         self._logger.debug("pinkySpeaker.lib.model.simpleRNN.fit()")
 
-        # title_hist = self._model['title_model'].fit(self._dataset['title_model']['input'], 
-        #                                             self._dataset['title_model']['output'],
-        #                                             batch_size = 128,
-        #                                             epochs = 2,
-        #                                             callbacks = [LambdaCallback(on_epoch_end=self._title_per_epoch)] )
+        title_hist = self._model['title_model'].fit(self._dataset['title_model']['input'], 
+                                                    self._dataset['title_model']['output'],
+                                                    batch_size = 128,
+                                                    epochs = 2,
+                                                    callbacks = [LambdaCallback(on_epoch_end=self._title_per_epoch)] )
 
         lyric_hist = self._model['lyric_model'].fit(self._dataset['lyric_model']['input'],
                                                     self._dataset['lyric_model']['output'],
@@ -330,7 +332,7 @@ class simpleRNN:
         return
 
     ## Model sampling setup function
-    def _generate_next(self, text, model, title, num_generated=320):
+    def _generate_next(self, text, model, title, num_generated = 320):
         self._logger.debug("pinkySpeaker.lib.model.simpleRNN._generate_next()")
 
         word_idxs = [self.word2idx(word) for word in text.lower().split()]
@@ -340,16 +342,13 @@ class simpleRNN:
             prediction = model.predict(x=np.array(word_idxs))
             max_cl = 0
             max_indx = 0
-            for ind, item in enumerate(prediction[-1][0]):  ## TODO plz fix this for title model
+            samples = prediction[-1] if title else prediction[-1][0]
+            for ind, item in enumerate(samples):  ## TODO plz fix this for title model
                 if item > max_cl:
                     max_cl = item
                     max_indx = ind
 
-            idx = self._sample(prediction[-1][0], temperature=0.7)
-            if self.idx2word(idx) == self._maskToken:
-                print("MASK TOKEN INCOMING!\n\n\n\n")
-            # elif self.idx2word(idx) == "endline":
-            #     print("ENDLINE INCOMING!\n\n\n\n\n\n")
+            idx = self._sample(samples, temperature=0.7)
             word_idxs.append(idx)
             ## TODO make this simpler and shorter
             if (title == True and (self.idx2word(idx) == "endline" or self.idx2word(idx) == "endfile")) or (title == False and self.idx2word(idx) == "endfile"):
