@@ -32,6 +32,7 @@ class simpleRNN:
         self._model = None
 
         self._lyric_sequence_length = 320
+        self._maskToken = "MASK_TOKEN"
 
         if data:
             self._initArchitecture(data)
@@ -58,13 +59,15 @@ class simpleRNN:
         ## The according function should be written to initialize it
         self._model = { 'word_model'  : None,
                         'title_model' : None,
-                        'lyric_model' : None 
+                        'lyric_model' : None,
+                        'class_weight': None
                       }
 
         ## The order matters because of word2idx usage, therefore manual initialization here
         self._model['word_model'] = word_model
         self._model['title_model'] = self._initTitleModel(pretrained_weights)
         self._model['lyric_model'] = self._initLyricModel(pretrained_weights)
+        self._model['class_weight'] = self._setClassWeight(vocab_size)
 
         self._logger.info("SimpleRNN Compiled successfully")
         return vocab_size, max_title_length, all_titles_length, inp_sent
@@ -89,7 +92,7 @@ class simpleRNN:
 
     def _initWordModel(self, inp_sentences):
         self._logger.debug("pinkySpeaker.lib.model.simpleRNN._initWordModel()")
-        inp_sentences.append(["MASK_TOKEN"]) # Token that ensembles masking of training weights. Used to pad sequence length
+        inp_sentences.append([self._maskToken]) # Token that ensembles masking of training weights. Used to pad sequence length
         wm = gensim.models.Word2Vec(inp_sentences, size = 300, min_count = 1, window = 4, iter = 200)
         self._logger.info("Word2Vec word model initialized")
         return wm
@@ -121,11 +124,19 @@ class simpleRNN:
         lm.add(LSTM(units=2*embedding_size, input_shape = (None, embedding_size), return_sequences=True))
         lm.add(LSTM(units=2*embedding_size, input_shape = (None, 2*embedding_size), return_sequences = True))
         lm.add(TimeDistributed(Dense(units=vocab_size, activation = 'softmax')))
-        lm.compile(optimizer='adam', loss='categorical_crossentropy')
+        lm.compile(optimizer='adam', loss='categorical_crossentropy', sample_weight_mode = "temporal")
 
         self._logger.info("Lyric model initialized")
         self._logger.info(lm.summary())
         return lm
+
+    def _setClassWeight(self, vocab_size):
+        self._logger.debug("pinkySpeaker.lib.model.simpleRNN._setClassWeight()")
+        clw = {}
+        for i in range(vocab_size):
+            clw[i] = 1
+        clw[self.word2idx(self._maskToken)] = 0
+        return clw
 
     def _constructSentences(self, raw_data):
         self._logger.debug("pinkySpeaker.lib.model.simpleRNN._constructSentences()")
@@ -160,14 +171,15 @@ class simpleRNN:
         self._logger.debug("pinkySpeaker.lib.model.simpleRNN._constructTLSet()")
 
         title_set = {
-                     'input': np.zeros([all_titles_length, max_title_length], dtype=np.int32), 
-                     'output': np.zeros([all_titles_length], dtype=np.int32)
+                     'input'            : np.zeros([all_titles_length, max_title_length], dtype=np.int32), 
+                     'output'           : np.zeros([all_titles_length], dtype=np.int32)
                      }
 
         lyric_set = {
-                     'input': np.zeros([len(raw_data), self._lyric_sequence_length], dtype = np.int32),
+                     'input'            : np.zeros([len(raw_data), self._lyric_sequence_length], dtype = np.int32),
+                     'sample_weight'    : np.zeros([len(raw_data), self._lyric_sequence_length], dtype = np.int32),
                      # lyric target will be the output of a softmax, i.e. a float and should be considered as such.
-                     'output': np.zeros([len(raw_data), self._lyric_sequence_length, vocab_size], dtype = np.float64) 
+                     'output'           : np.zeros([len(raw_data), self._lyric_sequence_length, vocab_size], dtype = np.float64) 
                      }   
 
         title_sample_index = 0
@@ -188,12 +200,13 @@ class simpleRNN:
 
             ## We need a fixed sequence length. The next function will grab a song and will return NN inputs and targets, sized _lyric_sequence_length
             ## If the song is bigger than this, multiple pairs of inputs/target will be returned.
-            l_in, l_out = self._splitSongtoSentence(" ".join([" ".join(x) for x in ([song_title] + song['lyrics'])]).split())
+            song_spl_inp, song_spl_out, song_sample_weight = self._splitSongtoSentence(" ".join([" ".join(x) for x in ([song_title] + song['lyrics'])]).split())
 
             ## For each input/target pair...
-            for inp, out in zip(l_in, l_out):
+            for inp, out, weight in zip(song_spl_inp, song_spl_out, song_sample_weight):
                 ## Convert str array to embed index tensor
                 lyric_set['input'][songIdx] = np.asarray([self.word2idx(x) for x in inp])
+                lyric_set['sample_weight'][songIdx] = np.asarray(weight)
                 ## And convert target str tokens to indices. Indices to one hot vecs vocab_size sized. Pass one-hot vecs through softmax to construct final target
                 lyric_set['output'][songIdx] = self._softmax(np.asarray([self.idx2onehot(self.word2idx(x), vocab_size) for x in out]))
 
@@ -215,14 +228,16 @@ class simpleRNN:
     def _splitSongtoSentence(self, song_list):
         self._logger.debug("pinkySpeaker.lib.model.simpleRNN._splitSongtoSentence()")
         
-        l_in = [song_list[x : min(len(song_list), x + self._lyric_sequence_length)] for x in range(0, len(song_list), self._lyric_sequence_length)]
-        l_out = [song_list[x + 1 : min(len(song_list), x + 1 + self._lyric_sequence_length)] for x in range(0, len(song_list), self._lyric_sequence_length)]
+        song_spl_inp = [song_list[x : min(len(song_list), x + self._lyric_sequence_length)] for x in range(0, len(song_list), self._lyric_sequence_length)]
+        song_spl_out = [song_list[x + 1 : min(len(song_list), x + 1 + self._lyric_sequence_length)] for x in range(0, len(song_list), self._lyric_sequence_length)]
 
         ## Pad input and output sequence to match the batch sequence length
-        l_in[-1] += ['MASK_TOKEN'] * (self._lyric_sequence_length - len(l_in[-1]))
-        l_out[-1] += ['MASK_TOKEN'] * (self._lyric_sequence_length - len(l_out[-1]))
+        song_spl_inp[-1] += [self._maskToken] * (self._lyric_sequence_length - len(song_spl_inp[-1]))
+        song_spl_out[-1] += [self._maskToken] * (self._lyric_sequence_length - len(song_spl_out[-1]))
 
-        return l_in, l_out
+        song_sample_weight = [[0 if x == self._maskToken or x == "endfile" else 1 for x in inp] for inp in song_spl_inp]
+
+        return song_spl_inp, song_spl_out, song_sample_weight
 
     ## Receive a word, return the index in the vocabulary
     def word2idx(self, word):
@@ -253,6 +268,7 @@ class simpleRNN:
                                                     self._dataset['lyric_model']['output'],
                                                     batch_size = 4,
                                                     epochs = 30,
+                                                    sample_weight = self._dataset['lyric_model']['sample_weight'],
                                                     callbacks = [LambdaCallback(on_epoch_end=self._lyrics_per_epoch)] )
        
         if save_model:
@@ -321,10 +337,10 @@ class simpleRNN:
                     max_indx = ind
 
             idx = self._sample(prediction[-1][0], temperature=0.7)
-            if self.idx2word(idx) == "MASK_TOKEN":
+            if self.idx2word(idx) == self._maskToken:
                 print("MASK TOKEN INCOMING!\n\n\n\n")
-            elif self.idx2word(idx) == "endline":
-                print("ENDLINE INCOMING!\n\n\n\n\n\n")
+            # elif self.idx2word(idx) == "endline":
+            #     print("ENDLINE INCOMING!\n\n\n\n\n\n")
             word_idxs.append(idx)
             ## TODO make this simpler and shorter
             if (title == True and (self.idx2word(idx) == "endline" or self.idx2word(idx) == "endfile")) or (title == False and self.idx2word(idx) == "endfile"):
