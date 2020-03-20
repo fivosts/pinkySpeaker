@@ -12,7 +12,7 @@ from keras import backend as K
 from keras.callbacks import LambdaCallback
 from keras.layers.recurrent import LSTM
 from keras.layers.embeddings import Embedding
-from keras.layers import Dense, Activation, TimeDistributed, Masking
+from keras.layers import Dense, Activation, TimeDistributed, Dropout
 from keras.models import Sequential, load_model
 from keras.utils.data_utils import get_file
 
@@ -103,8 +103,11 @@ class simpleRNN:
         vocab_size, embedding_size = weights.shape
         tm = Sequential()
         tm.add(Embedding(input_dim=vocab_size, output_dim=embedding_size, weights=[weights]))
+        tm.add(Dropout(0.2))
         tm.add(LSTM(units=2*embedding_size, return_sequences=True))
+        tm.add(Dropout(0.2))
         tm.add(LSTM(units=2*embedding_size))
+        tm.add(Dropout(0.2))
         tm.add(Dense(units=vocab_size))
         tm.add(Activation('softmax'))
         tm.compile(optimizer='adam', loss='sparse_categorical_crossentropy')
@@ -121,8 +124,11 @@ class simpleRNN:
         lm = Sequential()
         # lm.add(Masking(mask_value = self.word2idx("endline"), input_shape = ([None])))
         lm.add(Embedding(input_dim=vocab_size, output_dim=embedding_size, trainable = False, weights=[weights]))
+        lm.add(Dropout(0.2))
         lm.add(LSTM(units=2*embedding_size, input_shape = (None, embedding_size), return_sequences=True))
+        lm.add(Dropout(0.2))
         lm.add(LSTM(units=2*embedding_size, input_shape = (None, 2*embedding_size), return_sequences = True))
+        lm.add(Dropout(0.2))
         lm.add(TimeDistributed(Dense(units=vocab_size, activation = 'softmax')))
         lm.compile(optimizer='adam', loss='categorical_crossentropy', sample_weight_mode = "temporal")
 
@@ -325,8 +331,8 @@ class simpleRNN:
         self._logger.debug("pinkySpeaker.lib.model.simpleRNN._generate_next()")
 
         word_idxs = [self.word2idx(word) for word in text.lower().split()]
-        init_endline_bias = model.layers[-2].weights[1][self.word2idx("endline")]
-        init_endfile_bias = model.layers[-2].weights[1][self.word2idx("endfile")]
+        # init_endline_bias = model.layers[-2].weights[1][self.word2idx("endline")]
+        # init_endfile_bias = model.layers[-2].weights[1][self.word2idx("endfile")]
         for i in range(num_generated):
             prediction = model.predict(x=np.array(word_idxs))
             max_cl = 0
