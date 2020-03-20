@@ -12,7 +12,7 @@ from keras import backend as K
 from keras.callbacks import LambdaCallback
 from keras.layers.recurrent import LSTM
 from keras.layers.embeddings import Embedding
-from keras.layers import Dense, Activation, TimeDistributed, Flatten
+from keras.layers import Dense, Activation, TimeDistributed, Masking
 from keras.models import Sequential, load_model
 from keras.utils.data_utils import get_file
 
@@ -56,12 +56,17 @@ class simpleRNN:
         vocab_size, _ = pretrained_weights.shape
         ## Any new sub-model should be registered here
         ## The according function should be written to initialize it
-        self._model = { 'word_model'  : word_model,
-                        'title_model' : self._initTitleModel(pretrained_weights),
-                        'lyric_model' : self._initLyricModel(pretrained_weights) 
+        self._model = { 'word_model'  : None,
+                        'title_model' : None,
+                        'lyric_model' : None 
                       }
-        self._logger.info("SimpleRNN Compiled successfully")
 
+        ## The order matters because of word2idx usage, therefore manual initialization here
+        self._model['word_model'] = word_model
+        self._model['title_model'] = self._initTitleModel(pretrained_weights)
+        self._model['lyric_model'] = self._initLyricModel(pretrained_weights)
+
+        self._logger.info("SimpleRNN Compiled successfully")
         return vocab_size, max_title_length, all_titles_length, inp_sent
 
     def _initDataset(self, raw_data, vocab_size, mx_t_l, all_t_l, inp_sent):
@@ -111,6 +116,7 @@ class simpleRNN:
         vocab_size, embedding_size = weights.shape
 
         lm = Sequential()
+        # lm.add(Masking(mask_value = self.word2idx("endline"), input_shape = ([None])))
         lm.add(Embedding(input_dim=vocab_size, output_dim=embedding_size, trainable = False, weights=[weights]))
         lm.add(LSTM(units=2*embedding_size, input_shape = (None, embedding_size), return_sequences=True))
         lm.add(LSTM(units=2*embedding_size, input_shape = (None, 2*embedding_size), return_sequences = True))
@@ -191,11 +197,11 @@ class simpleRNN:
                 ## And convert target str tokens to indices. Indices to one hot vecs vocab_size sized. Pass one-hot vecs through softmax to construct final target
                 lyric_set['output'][songIdx] = self._softmax(np.asarray([self.idx2onehot(self.word2idx(x), vocab_size) for x in out]))
 
-        self._logger.debug("Title Input tensor dimensions: {}".format(title_set['input'].shape))
-        self._logger.debug("Title Target tensor dimensions: {}".format(title_set['output'].shape))
+        self._logger.info("Title Input tensor dimensions: {}".format(title_set['input'].shape))
+        self._logger.info("Title Target tensor dimensions: {}".format(title_set['output'].shape))
 
-        self._logger.debug("Lyric Input tensor dimensions: {}".format(lyric_set['input'].shape))
-        self._logger.debug("Lyric Target tensor dimensions: {}".format(lyric_set['output'].shape))
+        self._logger.info("Lyric Input tensor dimensions: {}".format(lyric_set['input'].shape))
+        self._logger.info("Lyric Target tensor dimensions: {}".format(lyric_set['output'].shape))
 
         return title_set, lyric_set
 
@@ -211,8 +217,10 @@ class simpleRNN:
         
         l_in = [song_list[x : min(len(song_list), x + self._lyric_sequence_length)] for x in range(0, len(song_list), self._lyric_sequence_length)]
         l_out = [song_list[x + 1 : min(len(song_list), x + 1 + self._lyric_sequence_length)] for x in range(0, len(song_list), self._lyric_sequence_length)]
-        l_in[-1] += ['endfile'] * (self._lyric_sequence_length - len(l_in[-1]))
-        l_out[-1] += ['endfile'] * (self._lyric_sequence_length - len(l_out[-1]))
+
+        ## Pad input and output sequence to match the batch sequence length
+        l_in[-1] += ['MASK_TOKEN'] * (self._lyric_sequence_length - len(l_in[-1]))
+        l_out[-1] += ['MASK_TOKEN'] * (self._lyric_sequence_length - len(l_out[-1]))
 
         return l_in, l_out
 
@@ -313,6 +321,10 @@ class simpleRNN:
                     max_indx = ind
 
             idx = self._sample(prediction[-1][0], temperature=0.7)
+            if self.idx2word(idx) == "MASK_TOKEN":
+                print("MASK TOKEN INCOMING!\n\n\n\n")
+            elif self.idx2word(idx) == "endline":
+                print("ENDLINE INCOMING!\n\n\n\n\n\n")
             word_idxs.append(idx)
             ## TODO make this simpler and shorter
             if (title == True and (self.idx2word(idx) == "endline" or self.idx2word(idx) == "endfile")) or (title == False and self.idx2word(idx) == "endfile"):
