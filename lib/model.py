@@ -22,14 +22,14 @@ class simpleRNN:
 
     _logger = None
 
-    def __init__(self, data = None):
+    def __init__(self, data = None, model = None):
         self._logger = l.getLogger()
         self._logger.debug("pinkySpeaker.lib.model.simpleRNN.__init__()")
 
         ## _dataset and _model are the two member variables of the class
         self._raw_data = data
+        self._model = model
         self._dataset = None
-        self._model = None
 
         self._lyric_sequence_length = 320
         self._maskToken = "MASK_TOKEN"
@@ -37,6 +37,8 @@ class simpleRNN:
 
         if data:
             self._initArchitecture(data)
+        elif model:
+            self._model = self._loadNNModel(model)
         self._logger.info("SimpleRNN model")
         return
 
