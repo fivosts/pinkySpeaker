@@ -74,8 +74,8 @@ class simpleRNN:
     def _loadNNModel(self, modelpath):
 
         return { 'word_model'   :   gensim.models.Word2Vec.load(pt.join(modelpath, "word_model.h5")),
-                 'title_model'  :   load_model("title_model.h5"),
-                 'lyric_model'  :   load_model("lyric_model.h5")
+                 'title_model'  :   load_model(pt.join(modelpath, "title_model.h5")),
+                 'lyric_model'  :   load_model(pt.join(modelpath, "lyric_model.h5"))
                }
 
     def _initDataset(self, raw_data, vocab_size, mx_t_l, all_t_l, inp_sent):
@@ -323,10 +323,10 @@ class simpleRNN:
                 self._model = self._loadNNModel(load_model)
 
         title = self._generate_next(seed, self._model['title_model'], True, num_generated = 10)
-        lyrics = self._generate_next(title.split(), self._model['lyric_model'], False, num_generated = 540)
+        lyrics = self._generate_next(title, self._model['lyric_model'], False, num_generated = 540)
         lyrics = " ".join(lyrics.split()[len(title.split()):])
 
-        self._logger.info("\nSeed: {}\nSong Title\n{}\nLyrics\n{}".format(seed, title, lyrics))
+        self._logger.info("\nSeed: {}\nSong Title\n{}\nLyrics\n{}".format(seed, self._prettyPrint(title), self._prettyPrint(lyrics)))
 
         return
 
