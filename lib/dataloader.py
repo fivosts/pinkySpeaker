@@ -16,7 +16,7 @@ def plotSamples(data, stream_out = "save"):
     l.getLogger().debug("pinkySpeaker.lib.dataloader.plotSamples()")
 
     if stream_out not in {"save", "show"}:
-    	l.getLogger().error("Wrong value provided for stream_out argument")
+        l.getLogger().error("Wrong value provided for stream_out argument")
         raise ValueError("stream_out: must be one of %r." % {"save", "show"})
 
     stream_length = {}
