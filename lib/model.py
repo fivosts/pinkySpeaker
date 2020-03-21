@@ -60,18 +60,23 @@ class simpleRNN:
         ## The according function should be written to initialize it
         self._model = { 'word_model'  : None,
                         'title_model' : None,
-                        'lyric_model' : None,
-                        'class_weight': None
+                        'lyric_model' : None
                       }
 
         ## The order matters because of word2idx usage, therefore manual initialization here
         self._model['word_model'] = word_model
         self._model['title_model'] = self._initTitleModel(pretrained_weights)
         self._model['lyric_model'] = self._initLyricModel(pretrained_weights)
-        self._model['class_weight'] = self._setClassWeight(vocab_size)
 
         self._logger.info("SimpleRNN Compiled successfully")
         return vocab_size, max_title_length, all_titles_length, inp_sent
+
+    def _loadNNModel(self, modelpath):
+
+        return { 'word_model'   :   gensim.models.Word2Vec.load(pt.join(modelpath, "word_model.h5")),
+                 'title_model'  :   load_model("title_model.h5"),
+                 'lyric_model'  :   load_model("lyric_model.h5")
+               }
 
     def _initDataset(self, raw_data, vocab_size, mx_t_l, all_t_l, inp_sent):
         self._logger.debug("pinkySpeaker.lib.model.simpleRNN._initDataset()")
@@ -315,7 +320,7 @@ class simpleRNN:
                 if self._model:
                     ## TODO not necessarily
                     self._logger.info("New model has been provided. Overriding cached model...")
-                self._model = self._loadModel(load_model)
+                self._model = self._loadNNModel(load_model)
 
         title = self._generate_next(seed, self._model['title_model'], True, num_generated = 10)
         lyrics = self._generate_next(title.split(), self._model['lyric_model'], False, num_generated = 540)
