@@ -65,7 +65,7 @@ def main():
 	else: ## args.mode == "gen"
 		model = m.simpleRNN()
 		prediction_seed = input("Insert seed for sampling: ")
-		model.predict(prediction_seed)
+		model.predict(prediction_seed, load_model = args.modelpath)
 
 	logger.shutdown()
 	return
