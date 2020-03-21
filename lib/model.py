@@ -132,6 +132,7 @@ class simpleRNN:
         lm.add(LSTM(units=2*embedding_size, input_shape = (None, 2*embedding_size), return_sequences = True))
         lm.add(Dropout(0.2))
         lm.add(TimeDistributed(Dense(units=vocab_size, activation = 'softmax')))
+        lm.add(TimeDistributed(Dropout(0.2)))
         lm.compile(optimizer='adam', loss='categorical_crossentropy', sample_weight_mode = "temporal")
 
         self._logger.info("Lyric model initialized")
@@ -246,7 +247,7 @@ class simpleRNN:
         song_spl_inp[-1] += [self._maskToken] * (self._lyric_sequence_length - len(song_spl_inp[-1]))
         song_spl_out[-1] += [self._maskToken] * (self._lyric_sequence_length - len(song_spl_out[-1]))
 
-        song_sample_weight = [[0 if x == self._maskToken or x == "endfile" else 1 for x in inp] for inp in song_spl_inp]
+        song_sample_weight = [[0 if x == self._maskToken else 50 if x == "endfile" else 50 if x == "endline" else 1 for x in inp] for inp in song_spl_inp]
 
         return song_spl_inp, song_spl_out, song_sample_weight
 
@@ -275,7 +276,7 @@ class simpleRNN:
         elif self._maskToken in text:
             self._logger.warning("MASK_TOKEN has been found to generated text!")
 
-        return text.replace("endline", "\n").replace("endfile", "\nEND")
+        return text.replace("endline ", "\n").replace("endfile", "\nEND")
 
     ## Just fit it!
     def fit(self, save_model = None):
@@ -289,8 +290,8 @@ class simpleRNN:
 
         lyric_hist = self._model['lyric_model'].fit(self._dataset['lyric_model']['input'],
                                                     self._dataset['lyric_model']['output'],
-                                                    batch_size = 4,
-                                                    epochs = 30,
+                                                    batch_size = 8,
+                                                    epochs = 60,
                                                     sample_weight = self._dataset['lyric_model']['sample_weight'],
                                                     callbacks = [LambdaCallback(on_epoch_end=self._lyrics_per_epoch)] )
        
@@ -320,7 +321,7 @@ class simpleRNN:
             ]
         for text in texts:
             _sample = self._generate_next(text, self._model['title_model'], title = True)
-            self._logger.info('%s... -> %s' % (text, self.prettyPrint(_sample)))
+            self._logger.info('%s... -> \n%s\n' % (text, self._prettyPrint(_sample)))
         return
 
     ## Booting callback on lyric generation between epochs
@@ -340,7 +341,7 @@ class simpleRNN:
             ]
         for text in texts:
             _sample = self._generate_next(text, self._model['lyric_model'], title = False)
-            self._logger.info('%s... -> %s' % (text, self.prettyPrint(_sample)))
+            self._logger.info('\n%s... -> \n%s\n' % (text, self._prettyPrint(_sample)))
         return
 
     ## Model sampling setup function
