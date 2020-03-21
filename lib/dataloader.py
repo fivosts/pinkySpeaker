@@ -12,8 +12,12 @@ from eupy.native import plotter as plt
 Plot length of samples as bars.
 Useful to determine the fixed size of sequences that will be fed to LSTM.
 """
-def plotSamples(data, stream_out):
+def plotSamples(data, stream_out = "save"):
     l.getLogger().debug("pinkySpeaker.lib.dataloader.plotSamples()")
+
+    if stream_out not in {"save", "show"}:
+    	l.getLogger().error("Wrong value provided for stream_out argument")
+        raise ValueError("stream_out: must be one of %r." % {"save", "show"})
 
     stream_length = {}
     max_len = 0
@@ -37,8 +41,8 @@ def plotSamples(data, stream_out):
     for leng, freq in ordered_list:
         plot_list[0]['y'][0][int(leng / chunk_size)] += freq
 
-    plt.plot_bars(plot_list,show_file = True, 
-                            save_file = False,
+    plt.plot_bars(plot_list,show_file = True if stream_out == "show" else False, 
+                            save_file = True if stream_out == "save" else False,
                             bar_annotations = True,
                             show_xlabels = True)
     return
