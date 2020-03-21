@@ -303,6 +303,27 @@ class simpleRNN:
             self._model['lyric_model'].save(pt.join(save_model, "lyric_model.h5"))
         return
 
+    ## Run a model prediction based on sample input
+    def predict(self, seed, load_model = None):
+        self._logger.debug("pinkySpeaker.lib.model.simpleRNN.predict()")
+
+        if not self._model and not load_model:
+            self._logger.critical("Load model path has not been provided! Predict failed")
+        else:
+            if load_model:
+                if self._model:
+                    ## TODO not necessarily
+                    self._logger.info("New model has been provided. Overriding cached model...")
+                self._model = self._loadModel(load_model)
+
+        title = self._generate_next(seed, self._model['title_model'], True, num_generated = 10)
+        lyrics = self._generate_next(title.split(), self._model['lyric_model'], False, num_generated = 540)
+        lyrics = " ".join(lyrics.split()[len(title.split()):])
+
+        self._logger.info("\nSeed: {}\nSong Title\n{}\nLyrics\n{}".format(seed, title, lyrics))
+
+        return
+
     ## Booting callback on title generation between epochs
     def _title_per_epoch(self, epoch, _):
         self._logger.debug("pinkySpeaker.lib.model.simpleRNN._title_per_epoch()")
