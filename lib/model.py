@@ -308,7 +308,8 @@ class simpleRNN:
         self._logger.debug("pinkySpeaker.lib.model.simpleRNN.predict()")
 
         if not self._model and not load_model:
-            self._logger.critical("Load model path has not been provided! Predict failed")
+            self._logger.critical("Load model path has not been provided! Predict failed!")
+            raise ValueError("Model is not cached. Model load path has not been provided. Predict failed!")
         else:
             if load_model:
                 if self._model:
