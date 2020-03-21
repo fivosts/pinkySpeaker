@@ -62,9 +62,10 @@ def main():
 		dataset = dl.fetchData(artist_list, args.plot_samples)
 		model = m.simpleRNN(data = dataset)
 		model.fit(save_model = args.modelpath)
-	else:
-		#TODO
-		pass
+	else: ## args.mode == "gen"
+		model = m.simpleRNN()
+		prediction_seed = input("Insert seed for sampling: ")
+		model.predict(prediction_seed)
 
 	logger.shutdown()
 	return
