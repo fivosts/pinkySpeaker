@@ -292,13 +292,13 @@ class simpleRNN:
         title_hist = self._model['title_model'].fit(self._dataset['title_model']['input'], 
                                                     self._dataset['title_model']['output'],
                                                     batch_size = 4,
-                                                    epochs = 2,
+                                                    epochs = 60,
                                                     callbacks = [LambdaCallback(on_epoch_end=self._title_per_epoch)] )
 
         lyric_hist = self._model['lyric_model'].fit(self._dataset['lyric_model']['input'],
                                                     self._dataset['lyric_model']['output'],
                                                     batch_size = 8,
-                                                    epochs = 60,
+                                                    epochs = 50,
                                                     sample_weight = self._dataset['lyric_model']['sample_weight'],
                                                     callbacks = [LambdaCallback(on_epoch_end=self._lyrics_per_epoch)] )
        
@@ -349,7 +349,7 @@ class simpleRNN:
                 'comfortably'
             ]
         for text in texts:
-            _sample = self._generate_next(text, self._model['title_model'], title = True)
+            _sample = self._generate_next(text, self._model['title_model'], title = True, num_generated = 20)
             self._logger.info('%s... -> \n%s\n' % (text, self._prettyPrint(_sample)))
         return
 
