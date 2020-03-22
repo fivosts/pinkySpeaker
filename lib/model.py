@@ -188,7 +188,8 @@ class simpleRNN:
         self._logger.debug("pinkySpeaker.lib.model.simpleRNN._constructTLSet()")
 
         title_set = {
-                     'input'            : np.zeros([all_titles_length, max_title_length], dtype=np.int32), 
+                     'input'            : np.zeros([all_titles_length, max_title_length], dtype=np.int32),
+                     'class_weight'     : self._setClassWeight(vocab_size),
                      'output'           : np.zeros([all_titles_length], dtype=np.int32)
                      }
 
@@ -258,6 +259,14 @@ class simpleRNN:
 
         return song_spl_inp, song_spl_out, song_sample_weight
 
+    def _setClassWeight(self, vocab_size):
+        self._logger.debug("pinkySpeaker.lib.model.simpleRNN._setClassWeight()")
+        clw = {}
+        for i in range(vocab_size):
+            clw[i] = 1
+        clw[self.word2idx("endline")] = 50
+        return clw
+
     ## Receive a word, return the index in the vocabulary
     def word2idx(self, word):
         self._logger.debug("pinkySpeaker.lib.model.simpleRNN.word2idx()")
@@ -293,6 +302,7 @@ class simpleRNN:
                                                     self._dataset['title_model']['output'],
                                                     batch_size = 4,
                                                     epochs = 60,
+                                                    class_weight = self._dataset['title_model']['class_weight'],
                                                     callbacks = [LambdaCallback(on_epoch_end=self._title_per_epoch)] )
 
         lyric_hist = self._model['lyric_model'].fit(self._dataset['lyric_model']['input'],
