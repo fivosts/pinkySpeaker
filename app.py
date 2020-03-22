@@ -60,7 +60,7 @@ def main():
 		logger.info("Selected training of language model.")
 		artist_list = [os.path.join(args.datapath, x.lower()) for x in args.train]
 		dataset = dl.fetchData(artist_list, args.plot_samples)
-		model = m.simpleRNN(data = dataset)
+		model = m.simpleRNN(data = dataset, LSTM_Depth = 8)
 		model.fit(save_model = args.modelpath)
 	else: ## args.mode == "gen"
 		model = m.simpleRNN(model = args.modelpath)
