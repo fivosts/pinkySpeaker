@@ -113,9 +113,11 @@ class simpleRNN:
         tm = Sequential()
         tm.add(Embedding(input_dim=vocab_size, output_dim=embedding_size, weights=[weights]))
         tm.add(Dropout(0.2))
-        for _ in range(LSTM_Depth):
-	        tm.add(LSTM(units=embedding_size, return_sequences=True))
-    	    tm.add(Dropout(0.2))
+        for _ in range(LSTM_Depth - 1):
+            tm.add(LSTM(units=embedding_size, return_sequences=True))
+            tm.add(Dropout(0.2))
+        tm.add(LSTM(units=2 * embedding_size, return_sequences=False))
+        tm.add(Dropout(0.2))
         tm.add(Dense(units=vocab_size))
         tm.add(Activation('softmax'))
         tm.compile(optimizer='adam', loss='sparse_categorical_crossentropy')
@@ -134,8 +136,8 @@ class simpleRNN:
         lm.add(Embedding(input_dim=vocab_size, output_dim=embedding_size, trainable = False, weights=[weights]))
         lm.add(Dropout(0.2))
         for _ in range(LSTM_Depth):
-	        lm.add(LSTM(units=embedding_size, input_shape = (None, embedding_size), return_sequences=True))
-    	    lm.add(Dropout(0.2))
+            lm.add(LSTM(units=embedding_size, input_shape = (None, embedding_size), return_sequences=True))
+            lm.add(Dropout(0.2))
         lm.add(TimeDistributed(Dense(units=vocab_size, activation = 'softmax')))
         lm.add(TimeDistributed(Dropout(0.2)))
         lm.compile(optimizer='adam', loss='categorical_crossentropy', sample_weight_mode = "temporal")
@@ -289,7 +291,7 @@ class simpleRNN:
 
         title_hist = self._model['title_model'].fit(self._dataset['title_model']['input'], 
                                                     self._dataset['title_model']['output'],
-                                                    batch_size = 128,
+                                                    batch_size = 4,
                                                     epochs = 2,
                                                     callbacks = [LambdaCallback(on_epoch_end=self._title_per_epoch)] )
 
