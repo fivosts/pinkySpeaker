@@ -22,7 +22,7 @@ class simpleRNN:
 
     _logger = None
 
-    def __init__(self, data = None, model = None, LSTM_Depth = 3):
+    def __init__(self, data = None, model = None, LSTM_Depth = 3, sequence_length = 320):
         self._logger = l.getLogger()
         self._logger.debug("pinkySpeaker.lib.model.simpleRNN.__init__()")
 
@@ -31,7 +31,7 @@ class simpleRNN:
         self._model = model
         self._dataset = None
 
-        self._lyric_sequence_length = 320
+        self._lyric_sequence_length = 80
         self._maskToken = "MASK_TOKEN"
         self._startToken = "START_TOKEN"
 
