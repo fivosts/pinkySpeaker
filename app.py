@@ -10,7 +10,6 @@ import sys
 from os import path as pt
 sys.path.append(pt.dirname("/home/fivosts/PhD/Code/eupy/eupy"))
 from eupy.native import logger as l
-
 import argparse as arg
 import os
 
@@ -70,7 +69,7 @@ def main():
 		artist_list = [os.path.join(args.datapath, x.lower()) for x in args.train]
 		dataset = dl.fetchData(artist_list, args.plot_samples)
 		model = MODEL_ZOO[args.model](data = dataset, LSTM_Depth = 8)
-		model.fit(save_model = args.modelpath)
+		loss = model.fit(epochs = 50)
 	else: ## args.mode == "gen"
 		model = MODEL_ZOO[args.model](model = args.modelpath)
 		while(True):
