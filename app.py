@@ -14,10 +14,11 @@ from eupy.native import logger as l
 import argparse as arg
 import os
 
-MODEL_ZOO = [
-				{'simpleRNN': simpleRNN},
-				{'Transformer': Transformer}
-			]
+MODEL_ZOO = {
+				'simpleRNN'		: simpleRNN.simpleRNN,
+				'Transformer'	: Transformer.Transformer
+			}
+
 
 """
 Argparse command line configuration
