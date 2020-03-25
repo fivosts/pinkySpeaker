@@ -5,7 +5,7 @@
 This is the entry point of the application.
 """
 from lib import dataloader as dl
-from lib import models
+from lib.models import simpleRNN, Transformer
 import sys
 from os import path as pt
 sys.path.append(pt.dirname("/home/fivosts/PhD/Code/eupy/eupy"))
@@ -15,8 +15,8 @@ import argparse as arg
 import os
 
 MODEL_ZOO = [
-				{'simpleRNN': models.simpleRNN},
-				{'Transformer': models.Transformer}
+				{'simpleRNN': simpleRNN},
+				{'Transformer': Transformer}
 			]
 
 """
@@ -25,7 +25,7 @@ Argparse command line configuration
 def configArgs():
 
 	p = arg.ArgumentParser(description = "Song generator machine learning models")
-	p.add_argument('-md', '--model', default = "simpleRNN", 
+	p.add_argument('-md', '--model', 
 					choices = ["simpleRNN", "Transformer"], required = True,
 					help = "Choose model architecture for the sequence generation")
 	p.add_argument('-m', '--mode', default = "gen", 
