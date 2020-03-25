@@ -298,6 +298,8 @@ class Transformer:
     def fit(self, epochs = 50, save_model = None):
         self._logger.debug("pinkySpeaker.lib.model.Transformer.fit()")
 
+        ## TODO: You are here. Check input dimensions.
+        ## Fork example to see how it works
         hist = self._model['Transformer'].fit(self._dataset['lyric_model']['input'],
                                                     self._dataset['lyric_model']['output'],
                                                     batch_size = 8,
