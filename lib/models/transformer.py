@@ -15,13 +15,15 @@ from keras.layers.recurrent import LSTM
 from keras.layers.embeddings import Embedding
 from keras.layers import Dense, Activation, TimeDistributed, Dropout
 
-class simpleRNN:
+from keras_transformer import get_model, decode
+
+class transformer:
 
     _logger = None
 
     def __init__(self, data = None, model = None, LSTM_Depth = 3, sequence_length = 320):
         self._logger = l.getLogger()
-        self._logger.debug("pinkySpeaker.lib.model.simpleRNN.__init__()")
+        self._logger.debug("pinkySpeaker.lib.model.transformer.__init__()")
 
         ## _dataset and _model are the two member variables of the class
         self._raw_data = data
@@ -36,11 +38,11 @@ class simpleRNN:
             self._initArchitecture(data, LSTM_Depth)
         elif model:
             self._model = self._loadNNModel(model)
-        self._logger.info("SimpleRNN model")
+        self._logger.info("Transformer model")
         return
 
     def _initArchitecture(self, raw_data, LSTM_Depth):
-        self._logger.debug("pinkySpeaker.lib.model.simpleRNN._initArchitecture()")
+        self._logger.debug("pinkySpeaker.lib.model.transformer._initArchitecture()")
 
         vocab_size, max_title_length, all_titles_length, inp_sentences = self._initNNModel(raw_data, LSTM_Depth)
         self._initDataset(raw_data, vocab_size, max_title_length, all_titles_length, inp_sentences)
@@ -48,7 +50,7 @@ class simpleRNN:
         return
 
     def _initNNModel(self, raw_data, LSTM_Depth):
-        self._logger.debug("pinkySpeaker.lib.model.simpleRNN._initNNModel()")
+        self._logger.debug("pinkySpeaker.lib.model.transformer._initNNModel()")
         self._logger.info("Initialize NN Model")
 
         inp_sent, max_title_length, all_titles_length = self._constructSentences(raw_data)
@@ -67,7 +69,7 @@ class simpleRNN:
         self._model['title_model'] = self._initTitleModel(pretrained_weights, LSTM_Depth)
         self._model['lyric_model'] = self._initLyricModel(pretrained_weights, LSTM_Depth)
 
-        self._logger.info("SimpleRNN Compiled successfully")
+        self._logger.info("transformer Compiled successfully")
         return vocab_size, max_title_length, all_titles_length, inp_sent
 
     def _loadNNModel(self, modelpath):
@@ -78,7 +80,7 @@ class simpleRNN:
                }
 
     def _initDataset(self, raw_data, vocab_size, mx_t_l, all_t_l, inp_sent):
-        self._logger.debug("pinkySpeaker.lib.model.simpleRNN._initDataset()")
+        self._logger.debug("pinkySpeaker.lib.model.transformer._initDataset()")
 
         title_set, lyric_set = self._constructTLSet(raw_data, vocab_size, mx_t_l, all_t_l)
 
@@ -96,7 +98,7 @@ class simpleRNN:
         return   
 
     def _initWordModel(self, inp_sentences):
-        self._logger.debug("pinkySpeaker.lib.model.simpleRNN._initWordModel()")
+        self._logger.debug("pinkySpeaker.lib.model.transformer._initWordModel()")
         inp_sentences.append([self._maskToken]) # Token that ensembles masking of training weights. Used to pad sequence length
         inp_sentences.append([self._startToken]) # Token that ensembles the start of a sequence
         wm = gensim.models.Word2Vec(inp_sentences, size = 300, min_count = 1, window = 4, iter = 200)
@@ -104,7 +106,7 @@ class simpleRNN:
         return wm
 
     def _initTitleModel(self, weights, LSTM_Depth):
-        self._logger.debug("pinkySpeaker.lib.model.simpleRNN._initTitleModel()")
+        self._logger.debug("pinkySpeaker.lib.model.transformer._initTitleModel()")
 
         vocab_size, embedding_size = weights.shape
         tm = Sequential()
@@ -124,7 +126,7 @@ class simpleRNN:
         return tm
 
     def _initLyricModel(self, weights, LSTM_Depth):
-        self._logger.debug("pinkySpeaker.lib.model.simpleRNN._initLyricModel()")
+        self._logger.debug("pinkySpeaker.lib.model.transformer._initLyricModel()")
 
         vocab_size, embedding_size = weights.shape
 
@@ -144,7 +146,7 @@ class simpleRNN:
         return lm
 
     def _setClassWeight(self, vocab_size):
-        self._logger.debug("pinkySpeaker.lib.model.simpleRNN._setClassWeight()")
+        self._logger.debug("pinkySpeaker.lib.model.transformer._setClassWeight()")
         clw = {}
         for i in range(vocab_size):
             clw[i] = 1
@@ -153,7 +155,7 @@ class simpleRNN:
         return clw
 
     def _constructSentences(self, raw_data):
-        self._logger.debug("pinkySpeaker.lib.model.simpleRNN._constructSentences()")
+        self._logger.debug("pinkySpeaker.lib.model.transformer._constructSentences()")
         self._logger.info("Sentence preprocessing for word model")
 
         sentence_size = 10
@@ -175,14 +177,14 @@ class simpleRNN:
         return self._listToChunksList(words, sentence_size), max_title_length, all_titles_length
 
     def _listToChunksList(self, lst, n):
-        self._logger.debug("pinkySpeaker.lib.model.simpleRNN._listToChunksList()")
+        self._logger.debug("pinkySpeaker.lib.model.transformer._listToChunksList()")
         chunk_list = []
         for i in range(0, len(lst), n):
             chunk_list.append(lst[i: i + n])
         return chunk_list
 
     def _constructTLSet(self, raw_data, vocab_size, max_title_length, all_titles_length):
-        self._logger.debug("pinkySpeaker.lib.model.simpleRNN._constructTLSet()")
+        self._logger.debug("pinkySpeaker.lib.model.transformer._constructTLSet()")
 
         title_set = {
                      'input'            : np.zeros([all_titles_length, max_title_length], dtype=np.int32),
@@ -235,13 +237,13 @@ class simpleRNN:
 
     ## Receives an input tensor and returns an elem-by-elem softmax computed vector of the same dims
     def _softmax(self, inp_tensor):
-        self._logger.debug("pinkySpeaker.lib.model.simpleRNN._softmax()")
+        self._logger.debug("pinkySpeaker.lib.model.transformer._softmax()")
         m = np.max(inp_tensor)
         e = np.exp(inp_tensor - m)
         return e / np.sum(e)
 
     def _splitSongtoSentence(self, song_list):
-        self._logger.debug("pinkySpeaker.lib.model.simpleRNN._splitSongtoSentence()")
+        self._logger.debug("pinkySpeaker.lib.model.transformer._splitSongtoSentence()")
         
         song_list.insert(0, self._startToken)
 
@@ -257,7 +259,7 @@ class simpleRNN:
         return song_spl_inp, song_spl_out, song_sample_weight
 
     def _setClassWeight(self, vocab_size):
-        self._logger.debug("pinkySpeaker.lib.model.simpleRNN._setClassWeight()")
+        self._logger.debug("pinkySpeaker.lib.model.transformer._setClassWeight()")
         clw = {}
         for i in range(vocab_size):
             clw[i] = 1
@@ -266,15 +268,15 @@ class simpleRNN:
 
     ## Receive a word, return the index in the vocabulary
     def word2idx(self, word):
-        self._logger.debug("pinkySpeaker.lib.model.simpleRNN.word2idx()")
+        self._logger.debug("pinkySpeaker.lib.model.transformer.word2idx()")
         return self._model['word_model'].wv.vocab[word].index
     ## Receive a vocab index, return the workd
     def idx2word(self, idx):
-        self._logger.debug("pinkySpeaker.lib.model.simpleRNN.idx2word()")
+        self._logger.debug("pinkySpeaker.lib.model.transformer.idx2word()")
         return self._model['word_model'].wv.index2word[idx]
     ## Receive a vocab index, return its one hot vector
     def idx2onehot(self, idx, size):
-        self._logger.debug("pinkySpeaker.lib.model.simpleRNN.idx2onehot()")
+        self._logger.debug("pinkySpeaker.lib.model.transformer.idx2onehot()")
         ret = np.zeros(size)
         ret[idx] = 1000
         return ret
@@ -282,7 +284,7 @@ class simpleRNN:
     ## Converts "endline" to '\n' for pretty printing
     ## Also masks meta-tokens but throws a warning
     def _prettyPrint(self, text):
-        self._logger.debug("pinkySpeaker.lib.model.simpleRNN._prettyPrint()")
+        self._logger.debug("pinkySpeaker.lib.model.transformer._prettyPrint()")
 
         if self._startToken in text:
             self._logger.warning("START_TOKEN has been found to generated text!")
@@ -293,7 +295,7 @@ class simpleRNN:
 
     ## Just fit it!
     def fit(self, save_model = None):
-        self._logger.debug("pinkySpeaker.lib.model.simpleRNN.fit()")
+        self._logger.debug("pinkySpeaker.lib.model.transformer.fit()")
 
         title_hist = self._model['title_model'].fit(self._dataset['title_model']['input'], 
                                                     self._dataset['title_model']['output'],
@@ -310,7 +312,7 @@ class simpleRNN:
                                                     callbacks = [LambdaCallback(on_epoch_end=self._lyrics_per_epoch)] )
        
         if save_model:
-            save_model = pt.join(save_model, "simpleRNN")
+            save_model = pt.join(save_model, "transformer")
             makedirs(save_model, exist_ok = True)
             self._model['word_model'].save(pt.join(save_model, "word_model.h5"))
             self._model['title_model'].save(pt.join(save_model, "title_model.h5"))
@@ -319,7 +321,7 @@ class simpleRNN:
 
     ## Run a model prediction based on sample input
     def predict(self, seed, load_model = None):
-        self._logger.debug("pinkySpeaker.lib.model.simpleRNN.predict()")
+        self._logger.debug("pinkySpeaker.lib.model.transformer.predict()")
 
         if not self._model and not load_model:
             self._logger.critical("Load model path has not been provided! Predict failed!")
@@ -341,7 +343,7 @@ class simpleRNN:
 
     ## Booting callback on title generation between epochs
     def _title_per_epoch(self, epoch, _):
-        self._logger.debug("pinkySpeaker.lib.model.simpleRNN._title_per_epoch()")
+        self._logger.debug("pinkySpeaker.lib.model.transformer._title_per_epoch()")
 
         self._logger.info('\nGenerating text after epoch: %d' % epoch)
         texts = [
@@ -362,7 +364,7 @@ class simpleRNN:
 
     ## Booting callback on lyric generation between epochs
     def _lyrics_per_epoch(self, epoch, _):
-        self._logger.debug("pinkySpeaker.lib.model.simpleRNN._lyrics_per_epoch()")
+        self._logger.debug("pinkySpeaker.lib.model.transformer._lyrics_per_epoch()")
 
         self._logger.info('\nGenerating text after epoch: %d' % epoch)
         texts = [
@@ -382,7 +384,7 @@ class simpleRNN:
 
     ## Model sampling setup function
     def _generate_next(self, text, model, title, num_generated = 320):
-        self._logger.debug("pinkySpeaker.lib.model.simpleRNN._generate_next()")
+        self._logger.debug("pinkySpeaker.lib.model.transformer._generate_next()")
 
         word_idxs = [self.word2idx(word) for word in text.lower().split()]
         # init_endline_bias = model.layers[-2].weights[1][self.word2idx("endline")]
@@ -407,7 +409,7 @@ class simpleRNN:
 
     ## Take prediction vector, return the index of most likely class
     def _sample(self, preds, temperature=1.0):
-        self._logger.debug("pinkySpeaker.lib.model.simpleRNN._sample()")
+        self._logger.debug("pinkySpeaker.lib.model.transformer._sample()")
 
         if temperature <= 0:
             return np.argmax(preds)
