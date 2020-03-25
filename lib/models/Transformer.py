@@ -302,7 +302,6 @@ class Transformer:
                                                     self._dataset['lyric_model']['output'],
                                                     batch_size = 8,
                                                     epochs = 50,
-                                                    sample_weight = self._dataset['lyric_model']['sample_weight'],
                                                     callbacks = [LambdaCallback(on_epoch_end=self._lyrics_per_epoch)] )
        
         if save_model:
