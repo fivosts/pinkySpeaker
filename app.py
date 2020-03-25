@@ -74,8 +74,11 @@ def main():
 	else: ## args.mode == "gen"
 		model = MODEL_ZOO[args.model](model = args.modelpath)
 		while(True):
-			prediction_seed = input("Insert seed for sampling: ")
-			model.predict(prediction_seed)
+			try:
+				prediction_seed = input("Insert seed for sampling: ")
+				model.predict(prediction_seed)
+			except KeyboardInterrupt:
+				logger.info("Terminating app...")
 
 	logger.shutdown()
 	return
