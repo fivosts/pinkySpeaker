@@ -128,7 +128,7 @@ class Transformer:
         vocab_size, embedding_size = weights.shape
 
         lm = get_model(
-            token_num=self._lyric_sequence_length,
+            token_num=vocab_size,
             embed_dim=embedding_size,
             encoder_num=3,
             decoder_num=2,
