@@ -9,14 +9,11 @@ import numpy as np
 import gensim
 
 from keras import backend as K
+from keras.models import Sequential, load_model
 from keras.callbacks import LambdaCallback
 from keras.layers.recurrent import LSTM
 from keras.layers.embeddings import Embedding
 from keras.layers import Dense, Activation, TimeDistributed, Dropout
-from keras.models import Sequential, load_model
-from keras.utils.data_utils import get_file
-
-from keras.utils import to_categorical
 
 class simpleRNN:
 
