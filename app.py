@@ -5,7 +5,7 @@
 This is the entry point of the application.
 """
 from lib import dataloader as dl
-from lib.models import simpleRNN as m
+from lib import models
 import sys
 from os import path as pt
 sys.path.append(pt.dirname("/home/fivosts/PhD/Code/eupy/eupy"))
@@ -14,12 +14,20 @@ from eupy.native import logger as l
 import argparse as arg
 import os
 
+MODEL_ZOO = [
+				{'simpleRNN': models.simpleRNN},
+				{'Transformer': models.Transformer}
+			]
+
 """
 Argparse command line configuration
 """
 def configArgs():
 
 	p = arg.ArgumentParser(description = "Song generator machine learning models")
+	p.add_argument('-md', '--model', default = "simpleRNN", 
+					choices = ["simpleRNN", "Transformer"], required = True,
+					help = "Choose model architecture for the sequence generation")
 	p.add_argument('-m', '--mode', default = "gen", 
 					choices = ["train", "gen"], required = False, 
 					help = "Choose between training a word model or generating songs")
@@ -60,10 +68,10 @@ def main():
 		logger.info("Selected training of language model.")
 		artist_list = [os.path.join(args.datapath, x.lower()) for x in args.train]
 		dataset = dl.fetchData(artist_list, args.plot_samples)
-		model = m.simpleRNN(data = dataset, LSTM_Depth = 8)
+		model = MODEL_ZOO[args.model](data = dataset, LSTM_Depth = 8)
 		model.fit(save_model = args.modelpath)
 	else: ## args.mode == "gen"
-		model = m.simpleRNN(model = args.modelpath)
+		model = MODEL_ZOO[args.model](model = args.modelpath)
 		while(True):
 			prediction_seed = input("Insert seed for sampling: ")
 			model.predict(prediction_seed)
