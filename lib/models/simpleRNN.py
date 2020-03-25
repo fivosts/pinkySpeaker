@@ -292,20 +292,20 @@ class simpleRNN:
         return text.replace("endline ", "\n").replace("endfile", "\nEND")
 
     ## Just fit it!
-    def fit(self, save_model = None):
+    def fit(self, epochs = 50, save_model = None):
         self._logger.debug("pinkySpeaker.lib.model.simpleRNN.fit()")
 
         title_hist = self._model['title_model'].fit(self._dataset['title_model']['input'], 
                                                     self._dataset['title_model']['output'],
                                                     batch_size = 4,
-                                                    epochs = 60,
+                                                    epochs = epochs,
                                                     class_weight = self._dataset['title_model']['class_weight'],
                                                     callbacks = [LambdaCallback(on_epoch_end=self._title_per_epoch)] )
 
         lyric_hist = self._model['lyric_model'].fit(self._dataset['lyric_model']['input'],
                                                     self._dataset['lyric_model']['output'],
                                                     batch_size = 8,
-                                                    epochs = 50,
+                                                    epochs = epochs,
                                                     sample_weight = self._dataset['lyric_model']['sample_weight'],
                                                     callbacks = [LambdaCallback(on_epoch_end=self._lyrics_per_epoch)] )
        
@@ -315,7 +315,7 @@ class simpleRNN:
             self._model['word_model'].save(pt.join(save_model, "word_model.h5"))
             self._model['title_model'].save(pt.join(save_model, "title_model.h5"))
             self._model['lyric_model'].save(pt.join(save_model, "lyric_model.h5"))
-        return
+        return [x + y for x, y in zip(title_hist, lyric_hist)]
 
     ## Run a model prediction based on sample input
     def predict(self, seed, load_model = None):
