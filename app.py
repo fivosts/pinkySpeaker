@@ -5,7 +5,7 @@
 This is the entry point of the application.
 """
 from lib import dataloader as dl
-from lib import model as m
+from lib.models import simpleRNN as m
 import sys
 from os import path as pt
 sys.path.append(pt.dirname("/home/fivosts/PhD/Code/eupy/eupy"))
