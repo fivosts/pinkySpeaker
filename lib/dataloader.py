@@ -41,7 +41,7 @@ def plotSamples(data, stream_out = "save"):
     for leng, freq in ordered_list:
         plot_list[0]['y'][0][int(leng / chunk_size)] += freq
 
-    plt.plot_bars(plot_list,show_file = True if stream_out == "show" else False, 
+    plt.plotBars(plot_list,show_file = True if stream_out == "show" else False, 
                             save_file = True if stream_out == "save" else False,
                             bar_annotations = True,
                             show_xlabels = True)
