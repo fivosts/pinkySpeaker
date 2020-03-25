@@ -35,21 +35,21 @@ class transformer:
         self._startToken = "START_TOKEN"
 
         if data:
-            self._initArchitecture(data, LSTM_Depth)
+            self._initArchitecture(data)
         elif model:
             self._model = self._loadNNModel(model)
         self._logger.info("Transformer model")
         return
 
-    def _initArchitecture(self, raw_data, LSTM_Depth):
+    def _initArchitecture(self, raw_data):
         self._logger.debug("pinkySpeaker.lib.model.transformer._initArchitecture()")
 
-        vocab_size, max_title_length, all_titles_length, inp_sentences = self._initNNModel(raw_data, LSTM_Depth)
+        vocab_size, max_title_length, all_titles_length, inp_sentences = self._initNNModel(raw_data)
         self._initDataset(raw_data, vocab_size, max_title_length, all_titles_length, inp_sentences)
 
         return
 
-    def _initNNModel(self, raw_data, LSTM_Depth):
+    def _initNNModel(self, raw_data):
         self._logger.debug("pinkySpeaker.lib.model.transformer._initNNModel()")
         self._logger.info("Initialize NN Model")
 
@@ -60,22 +60,19 @@ class transformer:
         ## Any new sub-model should be registered here
         ## The according function should be written to initialize it
         self._model = { 'word_model'  : None,
-                        'title_model' : None,
                         'lyric_model' : None
                       }
 
         ## The order matters because of word2idx usage, therefore manual initialization here
         self._model['word_model'] = word_model
-        self._model['title_model'] = self._initTitleModel(pretrained_weights, LSTM_Depth)
-        self._model['lyric_model'] = self._initLyricModel(pretrained_weights, LSTM_Depth)
+        self._model['lyric_model'] = self._initLyricModel(pretrained_weights)
 
-        self._logger.info("transformer Compiled successfully")
+        self._logger.info("Transformer Compiled successfully")
         return vocab_size, max_title_length, all_titles_length, inp_sent
 
     def _loadNNModel(self, modelpath):
 
         return { 'word_model'   :   gensim.models.Word2Vec.load(pt.join(modelpath, "word_model.h5")),
-                 'title_model'  :   load_model(pt.join(modelpath, "title_model.h5")),
                  'lyric_model'  :   load_model(pt.join(modelpath, "lyric_model.h5"))
                }
 
@@ -125,23 +122,27 @@ class transformer:
         self._logger.info(tm.summary())
         return tm
 
-    def _initLyricModel(self, weights, LSTM_Depth):
+    def _initLyricModel(self, weights):
         self._logger.debug("pinkySpeaker.lib.model.transformer._initLyricModel()")
 
         vocab_size, embedding_size = weights.shape
 
-        lm = Sequential()
-        # lm.add(Masking(mask_value = self.word2idx("endline"), input_shape = ([None])))
-        lm.add(Embedding(input_dim=vocab_size, output_dim=embedding_size, trainable = False, weights=[weights]))
-        lm.add(Dropout(0.2))
-        for _ in range(LSTM_Depth):
-            lm.add(LSTM(units=embedding_size, input_shape = (None, embedding_size), return_sequences=True))
-            lm.add(Dropout(0.2))
-        lm.add(TimeDistributed(Dense(units=vocab_size, activation = 'softmax')))
-        lm.add(TimeDistributed(Dropout(0.2)))
-        lm.compile(optimizer='adam', loss='categorical_crossentropy', sample_weight_mode = "temporal")
+        lm = get_model(
+            token_num=self._lyric_sequence_length,
+            embed_dim=embedding_size,
+            encoder_num=3,
+            decoder_num=2,
+            head_num=3,
+            hidden_dim=120,
+            attention_activation='relu',
+            feed_forward_activation='relu',
+            dropout_rate=0.05,
+            embed_weights=weights,
+        )
 
-        self._logger.info("Lyric model initialized")
+        lm.compile(optimizer='adam', loss='sparse_categorical_crossentropy')
+
+        self._logger.info("Transformer model initialized")
         self._logger.info(lm.summary())
         return lm
 
@@ -297,13 +298,6 @@ class transformer:
     def fit(self, save_model = None):
         self._logger.debug("pinkySpeaker.lib.model.transformer.fit()")
 
-        title_hist = self._model['title_model'].fit(self._dataset['title_model']['input'], 
-                                                    self._dataset['title_model']['output'],
-                                                    batch_size = 4,
-                                                    epochs = 60,
-                                                    class_weight = self._dataset['title_model']['class_weight'],
-                                                    callbacks = [LambdaCallback(on_epoch_end=self._title_per_epoch)] )
-
         lyric_hist = self._model['lyric_model'].fit(self._dataset['lyric_model']['input'],
                                                     self._dataset['lyric_model']['output'],
                                                     batch_size = 8,
@@ -311,12 +305,12 @@ class transformer:
                                                     sample_weight = self._dataset['lyric_model']['sample_weight'],
                                                     callbacks = [LambdaCallback(on_epoch_end=self._lyrics_per_epoch)] )
        
-        if save_model:
-            save_model = pt.join(save_model, "transformer")
-            makedirs(save_model, exist_ok = True)
-            self._model['word_model'].save(pt.join(save_model, "word_model.h5"))
-            self._model['title_model'].save(pt.join(save_model, "title_model.h5"))
-            self._model['lyric_model'].save(pt.join(save_model, "lyric_model.h5"))
+        # if save_model:
+        #     save_model = pt.join(save_model, "transformer")
+        #     makedirs(save_model, exist_ok = True)
+            # self._model['word_model'].save(pt.join(save_model, "word_model.h5"))
+            # self._model['title_model'].save(pt.join(save_model, "title_model.h5"))
+            # self._model['lyric_model'].save(pt.join(save_model, "lyric_model.h5"))
         return
 
     ## Run a model prediction based on sample input
