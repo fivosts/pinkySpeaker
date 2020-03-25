@@ -65,7 +65,7 @@ class Transformer:
 
         ## The order matters because of word2idx usage, therefore manual initialization here
         self._model['word_model'] = word_model
-        self._model['lyric_model'] = self._initLyricModel(pretrained_weights)
+        self._model['Transformer'] = self._initLyricModel(pretrained_weights)
 
         self._logger.info("Transformer Compiled successfully")
         return vocab_size, max_title_length, all_titles_length, inp_sent
@@ -298,20 +298,18 @@ class Transformer:
     def fit(self, epochs = 50, save_model = None):
         self._logger.debug("pinkySpeaker.lib.model.Transformer.fit()")
 
-        lyric_hist = self._model['lyric_model'].fit(self._dataset['lyric_model']['input'],
+        hist = self._model['Transformer'].fit(self._dataset['lyric_model']['input'],
                                                     self._dataset['lyric_model']['output'],
                                                     batch_size = 8,
                                                     epochs = 50,
                                                     sample_weight = self._dataset['lyric_model']['sample_weight'],
                                                     callbacks = [LambdaCallback(on_epoch_end=self._lyrics_per_epoch)] )
        
-        # if save_model:
-        #     save_model = pt.join(save_model, "Transformer")
-        #     makedirs(save_model, exist_ok = True)
-            # self._model['word_model'].save(pt.join(save_model, "word_model.h5"))
-            # self._model['title_model'].save(pt.join(save_model, "title_model.h5"))
-            # self._model['lyric_model'].save(pt.join(save_model, "lyric_model.h5"))
-        return
+        if save_model:
+            save_model = pt.join(save_model, "Transformer")
+            makedirs(save_model, exist_ok = True)
+            self._model['Transformer'].save(pt.join(save_model, "Transformer.h5"))
+        return hist.history['loss']
 
     ## Run a model prediction based on sample input
     def predict(self, seed, load_model = None):
@@ -328,7 +326,7 @@ class Transformer:
                 self._model = self._loadNNModel(load_model)
 
         title = self._generate_next(seed, self._model['title_model'], True, num_generated = 10)
-        lyrics = self._generate_next(title, self._model['lyric_model'], False, num_generated = 540)
+        lyrics = self._generate_next(title, self._model['Transformer'], False, num_generated = 540)
         lyrics = " ".join(lyrics.split()[len(title.split()):])
 
         self._logger.info("\nSeed: {}\nSong Title\n{}\nLyrics\n{}".format(seed, self._prettyPrint(title), self._prettyPrint(lyrics)))
@@ -372,7 +370,7 @@ class Transformer:
                 'comfortably numb'
             ]
         for text in texts:
-            _sample = self._generate_next(text, self._model['lyric_model'], title = False)
+            _sample = self._generate_next(text, self._model['Transformer'], title = False)
             self._logger.info('\n%s... -> \n%s\n' % (text, self._prettyPrint(_sample)))
         return
 
