@@ -295,7 +295,7 @@ class Transformer:
         return text.replace("endline ", "\n").replace("endfile", "\nEND")
 
     ## Just fit it!
-    def fit(self, save_model = None):
+    def fit(self, epochs = 50, save_model = None):
         self._logger.debug("pinkySpeaker.lib.model.Transformer.fit()")
 
         lyric_hist = self._model['lyric_model'].fit(self._dataset['lyric_model']['input'],
