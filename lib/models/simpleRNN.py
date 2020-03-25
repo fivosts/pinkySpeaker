@@ -315,7 +315,7 @@ class simpleRNN:
             self._model['word_model'].save(pt.join(save_model, "word_model.h5"))
             self._model['title_model'].save(pt.join(save_model, "title_model.h5"))
             self._model['lyric_model'].save(pt.join(save_model, "lyric_model.h5"))
-        return [x + y for x, y in zip(title_hist, lyric_hist)]
+        return [x + y for x, y in zip(title_hist.history['loss'], lyric_hist.history['loss'])]
 
     ## Run a model prediction based on sample input
     def predict(self, seed, load_model = None):
