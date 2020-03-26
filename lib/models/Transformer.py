@@ -298,6 +298,95 @@ class Transformer:
     def fit(self, epochs = 50, save_model = None):
         self._logger.debug("pinkySpeaker.lib.model.Transformer.fit()")
 
+        # Build a small toy token dictionary
+        tokens = 'all work and no play makes jack a dull boy'.split(' ')
+        token_dict = {
+            '<PAD>': 0,
+            '<START>': 1,
+            '<END>': 2,
+        }
+        for token in tokens:
+            if token not in token_dict:
+                token_dict[token] = len(token_dict)
+
+        # Generate toy data
+        encoder_inputs_no_padding = []
+        encoder_inputs, decoder_inputs, decoder_outputs = [], [], []
+        for i in range(1, len(tokens) - 1):
+            encode_tokens, decode_tokens = tokens[:i], tokens[i:]
+            encode_tokens = ['<START>'] + encode_tokens + ['<END>'] + ['<PAD>'] * (len(tokens) - len(encode_tokens))
+            output_tokens = decode_tokens + ['<END>', '<PAD>'] + ['<PAD>'] * (len(tokens) - len(decode_tokens))
+            decode_tokens = ['<START>'] + decode_tokens + ['<END>'] + ['<PAD>'] * (len(tokens) - len(decode_tokens))
+            # encode_tokens = list(map(lambda x: token_dict[x], encode_tokens))
+            # decode_tokens = list(map(lambda x: token_dict[x], decode_tokens))
+            # output_tokens = list(map(lambda x: [token_dict[x]], output_tokens))
+            encoder_inputs_no_padding.append(encode_tokens[:i + 2])
+            encoder_inputs.append(encode_tokens)
+            decoder_inputs.append(decode_tokens)
+            decoder_outputs.append(output_tokens)
+
+        # Build the model
+        model = get_model(
+            token_num=len(token_dict),
+            embed_dim=300,
+            encoder_num=6,
+            decoder_num=6,
+            head_num=12,
+            hidden_dim=512,
+            attention_activation='relu',
+            feed_forward_activation='relu',
+            dropout_rate=0.05,
+            embed_weights=np.random.random((13, 300)),
+        )
+        model.compile(
+            optimizer='adam',
+            loss='sparse_categorical_crossentropy',
+        )
+        model.summary()
+
+        x = [np.asarray(encoder_inputs), np.asarray(decoder_inputs)]
+        y = np.asarray(decoder_outputs)
+
+        ## 13. This should be the token_num
+        print(len(token_dict))
+
+        ## 8, (8, 13). 13 is the sequence length. 8 is the number of sequence
+        print("Encoder inputs: {} {}".format(len(encoder_inputs), np.asarray(encoder_inputs).shape))
+
+        ## 8, (8, 13) same as above
+        print("Decoder inputs: {} {}".format(len(decoder_inputs), np.asarray(decoder_inputs).shape))
+
+        ## 8, (8, 13, 1) 8 sequences, 13 one sequence length, 1 token output
+        print("Decoder outputs: {} {}".format(len(decoder_outputs), np.asarray(decoder_outputs).shape))
+
+        ## (2, 8, 13)
+        print("x shape: {}".format(np.asarray(x).shape))
+        
+        ## (8, 13, 1)
+        print("y shape: {}".format(y.shape))
+
+        print(self._dataset['lyric_model']['input'].shape)
+        print(self._dataset['lyric_model']['output'].shape)
+
+
+        for i, j, k in zip(encoder_inputs, decoder_inputs, decoder_outputs):
+            print(i)
+            print(j)
+            print(k)
+            print()
+
+        print(encoder_inputs)
+        print(decoder_inputs)
+        print(decoder_outputs)
+
+        # Train the model
+        model.fit(
+            x = x,
+            y = y,
+            epochs=2,
+        )  
+        exit(1)
+
         ## TODO: You are here. Check input dimensions.
         ## Fork example to see how it works
         hist = self._model['Transformer'].fit(self._dataset['lyric_model']['input'],
