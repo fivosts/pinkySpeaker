@@ -21,7 +21,7 @@ class Transformer:
 
     _logger = None
 
-    def __init__(self, data = None, model = None, LSTM_Depth = 3, sequence_length = 320):
+    def __init__(self, data = None, model = None, LSTM_Depth = 3, sequence_length = 30):
         self._logger = l.getLogger()
         self._logger.debug("pinkySpeaker.lib.model.Transformer.__init__()")
 
@@ -30,9 +30,11 @@ class Transformer:
         self._model = model
         self._dataset = None
 
-        self._lyric_sequence_length = 80
-        self._maskToken = "MASK_TOKEN"
-        self._startToken = "START_TOKEN"
+        self._lyric_sequence_length = sequence_length
+
+        self._startToken = "</START>"
+        self._endToken = "endfile" ## TODO
+        self._padToken = "</PAD>"
 
         if data:
             self._initArchitecture(data)
@@ -79,15 +81,12 @@ class Transformer:
     def _initDataset(self, raw_data, vocab_size, mx_t_l, all_t_l, inp_sent):
         self._logger.debug("pinkySpeaker.lib.model.Transformer._initDataset()")
 
-        title_set, lyric_set = self._constructTLSet(raw_data, vocab_size, mx_t_l, all_t_l)
+        lyric_set = self._constructTLSet(raw_data, vocab_size, mx_t_l, all_t_l)
 
-        if len(title_set['input']) != len(title_set['output']):
-            raise ValueError("Wrong title set dimensions!")
-        if len(lyric_set['input']) != len(lyric_set['output']):
+        if len(lyric_set['encoder_input']) != len(lyric_set['output']) or len(lyric_set['decoder_input']) != len(lyric_set['output']):
             raise ValueError("Wrong lyric set dimensions!")
 
         self._dataset = { 'word_model'      : inp_sent,
-                          'title_model'     : title_set,
                           'lyric_model'     : lyric_set 
                      }
 
@@ -96,7 +95,7 @@ class Transformer:
 
     def _initWordModel(self, inp_sentences):
         self._logger.debug("pinkySpeaker.lib.model.Transformer._initWordModel()")
-        inp_sentences.append([self._maskToken]) # Token that ensembles masking of training weights. Used to pad sequence length
+        inp_sentences.append([self._padToken]) # Token that ensembles masking of training weights. Used to pad sequence length
         inp_sentences.append([self._startToken]) # Token that ensembles the start of a sequence
         wm = gensim.models.Word2Vec(inp_sentences, size = 300, min_count = 1, window = 4, iter = 200)
         self._logger.info("Word2Vec word model initialized")
@@ -128,16 +127,17 @@ class Transformer:
         vocab_size, embedding_size = weights.shape
 
         lm = get_model(
-            token_num=vocab_size,
-            embed_dim=embedding_size,
-            encoder_num=3,
-            decoder_num=2,
-            head_num=3,
-            hidden_dim=120,
-            attention_activation='relu',
-            feed_forward_activation='relu',
-            dropout_rate=0.05,
-            embed_weights=weights,
+            token_num = vocab_size,
+            embed_dim = embedding_size,
+            encoder_num = 2,
+            decoder_num = 2,
+            head_num = 2,
+            hidden_dim = 128,
+            attention_activation = 'relu',
+            feed_forward_activation = 'relu',
+            dropout_rate = 0.05,
+            embed_weights = weights,
+            embed_trainable = False
         )
 
         lm.compile(optimizer='adam', loss='sparse_categorical_crossentropy')
@@ -151,7 +151,7 @@ class Transformer:
         clw = {}
         for i in range(vocab_size):
             clw[i] = 1
-        clw[self.word2idx(self._maskToken)] = 0
+        clw[self.word2idx(self._padToken)] = 0
         clw[self.word2idx(self._startToken)] = 0
         return clw
 
@@ -187,54 +187,46 @@ class Transformer:
     def _constructTLSet(self, raw_data, vocab_size, max_title_length, all_titles_length):
         self._logger.debug("pinkySpeaker.lib.model.Transformer._constructTLSet()")
 
-        title_set = {
-                     'input'            : np.zeros([all_titles_length, max_title_length], dtype=np.int32),
-                     'class_weight'     : self._setClassWeight(vocab_size),
-                     'output'           : np.zeros([all_titles_length], dtype=np.int32)
-                     }
+        # lyric_set = {
+        #              'input'            : np.zeros([2, len(raw_data), self._lyric_sequence_length], dtype = np.int32),
+        #              'sample_weight'    : np.zeros([len(raw_data), self._lyric_sequence_length], dtype = np.int32),
+        #              # lyric target will be the output of a softmax, i.e. a float and should be considered as such.
+        #              'output'           : np.zeros([len(raw_data), self._lyric_sequence_length, 1], dtype = np.float64) 
+        #              }   
 
-        lyric_set = {
-                     'input'            : np.zeros([len(raw_data), self._lyric_sequence_length], dtype = np.int32),
-                     'sample_weight'    : np.zeros([len(raw_data), self._lyric_sequence_length], dtype = np.int32),
-                     # lyric target will be the output of a softmax, i.e. a float and should be considered as such.
-                     'output'           : np.zeros([len(raw_data), self._lyric_sequence_length, vocab_size], dtype = np.float64) 
-                     }   
+        encoder_input = []
+        decoder_input = []
+        decoder_output = []
+        sample_weight = []
 
-        title_sample_index = 0
         ## Iterate over each song. Keep index
-        for songIdx, song in enumerate(raw_data):
-
-            song_title = song['title']
-            ## Iterate over length of current song
-            for curr_sent_size in range(len(song_title) - 1):
-                
-                ## Traverse all indices until current index ( + 1 exists in the range to grab the next one as a target)
-                for current_index in range(curr_sent_size + 1):
-                    title_set['input'][title_sample_index][(max_title_length - 1) - curr_sent_size + current_index] = self.word2idx(song_title[current_index])
-                    title_set['output'][title_sample_index] = self.word2idx(song_title[current_index + 1])
-                title_sample_index += 1
-
-            ## At this point, title_set has been constructed.
+        for song in raw_data:
 
             ## We need a fixed sequence length. The next function will grab a song and will return NN inputs and targets, sized _lyric_sequence_length
             ## If the song is bigger than this, multiple pairs of inputs/target will be returned.
-            song_spl_inp, song_spl_out, song_sample_weight = self._splitSongtoSentence(" ".join([" ".join(x) for x in ([song_title] + song['lyrics'])]).split())
+            encoder_in, decoder_in, decoder_target, song_sample_weight = self._splitSongtoSentence(" ".join([" ".join(x) for x in ([song['title']] + song['lyrics'])]).split())
 
             ## For each input/target pair...
-            for inp, out, weight in zip(song_spl_inp, song_spl_out, song_sample_weight):
+            for enc_in, dec_in, dec_out, weight in zip(encoder_in, decoder_in, decoder_target, song_sample_weight):
                 ## Convert str array to embed index tensor
-                lyric_set['input'][songIdx] = np.asarray([self.word2idx(x) for x in inp])
-                lyric_set['sample_weight'][songIdx] = np.asarray(weight)
                 ## And convert target str tokens to indices. Indices to one hot vecs vocab_size sized. Pass one-hot vecs through softmax to construct final target
-                lyric_set['output'][songIdx] = self._softmax(np.asarray([self.idx2onehot(self.word2idx(x), vocab_size) for x in out]))
+                encoder_input.append(np.asarray([self.word2idx(x) for x in enc_in]))
+                decoder_input.append(np.asarray([self.word2idx(x) for x in dec_in]))
+                decoder_output.append(np.asarray([[self.word2idx(x)] for x in dec_out]))
+                sample_weight.append(np.asarray(weight))
 
-        self._logger.info("Title Input tensor dimensions: {}".format(title_set['input'].shape))
-        self._logger.info("Title Target tensor dimensions: {}".format(title_set['output'].shape))
+        lyric_set = {
+                        'encoder_input'     : np.asarray(encoder_input, dtype = np.int32),
+                        'decoder_input'     : np.asarray(decoder_input, dtype = np.int32),                        
+                        'output'            : np.asarray(decoder_output, dtype = np.int32),
+                        'sample_weight'     : np.asarray(sample_weight, dtype = np.int32)
+                    }
 
-        self._logger.info("Lyric Input tensor dimensions: {}".format(lyric_set['input'].shape))
+        self._logger.info("Lyric encoder input tensor dimensions: {}".format(lyric_set['encoder_input'].shape))
+        self._logger.info("Lyric decoder input tensor dimensions: {}".format(lyric_set['decoder_input'].shape))
         self._logger.info("Lyric Target tensor dimensions: {}".format(lyric_set['output'].shape))
 
-        return title_set, lyric_set
+        return lyric_set
 
     ## Receives an input tensor and returns an elem-by-elem softmax computed vector of the same dims
     def _softmax(self, inp_tensor):
@@ -243,21 +235,28 @@ class Transformer:
         e = np.exp(inp_tensor - m)
         return e / np.sum(e)
 
-    def _splitSongtoSentence(self, song_list):
+    def _splitSongtoSentence(self, curr_song):
         self._logger.debug("pinkySpeaker.lib.model.Transformer._splitSongtoSentence()")
         
-        song_list.insert(0, self._startToken)
+        step = self._lyric_sequence_length - 1
 
-        song_spl_inp = [song_list[x : min(len(song_list), x + self._lyric_sequence_length)] for x in range(0, len(song_list), self._lyric_sequence_length)]
-        song_spl_out = [song_list[x + 1 : min(len(song_list), x + 1 + self._lyric_sequence_length)] for x in range(0, len(song_list), self._lyric_sequence_length)]
+        encoder_input  = [ [self._startToken] + curr_song[x : min(len(curr_song), x + step)] for x in range(0, len(curr_song), step)]
+        decoder_input  = [ curr_song[x : min(len(curr_song), x + step)] + [self._endToken] for x in range(0, len(curr_song), step)]
+        decoder_output = decoder_input
 
         ## Pad input and output sequence to match the batch sequence length
-        song_spl_inp[-1] += [self._maskToken] * (self._lyric_sequence_length - len(song_spl_inp[-1]))
-        song_spl_out[-1] += [self._maskToken] * (self._lyric_sequence_length - len(song_spl_out[-1]))
+        encoder_input[-1]  += [self._padToken] * (step + 1 - len(encoder_input[-1]))
+        decoder_input[-1]  += [self._padToken] * (step + 1 - len(decoder_input[-1]))
+        decoder_output[-1] += [self._padToken] * (step + 1 - len(decoder_output[-1]))
 
-        song_sample_weight = [[0 if x == self._maskToken else 50 if x == "endfile" else 50 if x == "endline" else 1 for x in inp] for inp in song_spl_inp]
+        song_sample_weight = [[     0 if x == self._padToken
+                               else 0 if x == self._startToken
+                               else 50 if x == "endfile" 
+                               else 10 if x == "endline" 
+                               else 1 for x in inp] 
+                            for inp in encoder_input]
 
-        return song_spl_inp, song_spl_out, song_sample_weight
+        return encoder_input, decoder_input, decoder_output, song_sample_weight
 
     def _setClassWeight(self, vocab_size):
         self._logger.debug("pinkySpeaker.lib.model.Transformer._setClassWeight()")
@@ -288,9 +287,11 @@ class Transformer:
         self._logger.debug("pinkySpeaker.lib.model.Transformer._prettyPrint()")
 
         if self._startToken in text:
-            self._logger.warning("START_TOKEN has been found to generated text!")
-        elif self._maskToken in text:
-            self._logger.warning("MASK_TOKEN has been found to generated text!")
+            self._logger.warning("</START> has been found to generated text!")
+        if self._padToken in text:
+            self._logger.warning("</PAD> has been found to generated text!")
+        if "endline" in text:
+            self._logger.warning("Endline found in text!")
 
         return text.replace("endline ", "\n").replace("endfile", "\nEND")
 
@@ -317,83 +318,22 @@ class Transformer:
             encode_tokens = ['<START>'] + encode_tokens + ['<END>'] + ['<PAD>'] * (len(tokens) - len(encode_tokens))
             output_tokens = decode_tokens + ['<END>', '<PAD>'] + ['<PAD>'] * (len(tokens) - len(decode_tokens))
             decode_tokens = ['<START>'] + decode_tokens + ['<END>'] + ['<PAD>'] * (len(tokens) - len(decode_tokens))
-            # encode_tokens = list(map(lambda x: token_dict[x], encode_tokens))
-            # decode_tokens = list(map(lambda x: token_dict[x], decode_tokens))
-            # output_tokens = list(map(lambda x: [token_dict[x]], output_tokens))
+            encode_tokens = list(map(lambda x: token_dict[x], encode_tokens))
+            decode_tokens = list(map(lambda x: token_dict[x], decode_tokens))
+            output_tokens = list(map(lambda x: [token_dict[x]], output_tokens))
             encoder_inputs_no_padding.append(encode_tokens[:i + 2])
             encoder_inputs.append(encode_tokens)
             decoder_inputs.append(decode_tokens)
             decoder_outputs.append(output_tokens)
 
-        # Build the model
-        model = get_model(
-            token_num=len(token_dict),
-            embed_dim=300,
-            encoder_num=6,
-            decoder_num=6,
-            head_num=12,
-            hidden_dim=512,
-            attention_activation='relu',
-            feed_forward_activation='relu',
-            dropout_rate=0.05,
-            embed_weights=np.random.random((13, 300)),
-        )
-        model.compile(
-            optimizer='adam',
-            loss='sparse_categorical_crossentropy',
-        )
-        model.summary()
-
-        x = [np.asarray(encoder_inputs), np.asarray(decoder_inputs)]
-        y = np.asarray(decoder_outputs)
-
-        ## 13. This should be the token_num
-        print(len(token_dict))
-
-        ## 8, (8, 13). 13 is the sequence length. 8 is the number of sequence
-        print("Encoder inputs: {} {}".format(len(encoder_inputs), np.asarray(encoder_inputs).shape))
-
-        ## 8, (8, 13) same as above
-        print("Decoder inputs: {} {}".format(len(decoder_inputs), np.asarray(decoder_inputs).shape))
-
-        ## 8, (8, 13, 1) 8 sequences, 13 one sequence length, 1 token output
-        print("Decoder outputs: {} {}".format(len(decoder_outputs), np.asarray(decoder_outputs).shape))
-
-        ## (2, 8, 13)
-        print("x shape: {}".format(np.asarray(x).shape))
-        
-        ## (8, 13, 1)
-        print("y shape: {}".format(y.shape))
-
-        print(self._dataset['lyric_model']['input'].shape)
-        print(self._dataset['lyric_model']['output'].shape)
-
-
-        for i, j, k in zip(encoder_inputs, decoder_inputs, decoder_outputs):
-            print(i)
-            print(j)
-            print(k)
-            print()
-
-        print(encoder_inputs)
-        print(decoder_inputs)
-        print(decoder_outputs)
-
-        # Train the model
-        model.fit(
-            x = x,
-            y = y,
-            epochs=2,
-        )  
-        exit(1)
-
         ## TODO: You are here. Check input dimensions.
         ## Fork example to see how it works
-        hist = self._model['Transformer'].fit(self._dataset['lyric_model']['input'],
-                                                    self._dataset['lyric_model']['output'],
-                                                    batch_size = 8,
-                                                    epochs = 50,
-                                                    callbacks = [LambdaCallback(on_epoch_end=self._lyrics_per_epoch)] )
+        hist = self._model['Transformer'].fit( x = [self._dataset['lyric_model']['encoder_input'], self._dataset['lyric_model']['decoder_input']],
+                                               y = self._dataset['lyric_model']['output'],
+                                               # sample_weight = self._dataset['lyric_model']['sample_weight'],
+                                               batch_size = 4,
+                                               epochs = 50,
+                                               callbacks = [LambdaCallback(on_epoch_end=self._lyrics_per_epoch)] )
        
         if save_model:
             save_model = pt.join(save_model, "Transformer")
@@ -469,25 +409,45 @@ class Transformer:
         self._logger.debug("pinkySpeaker.lib.model.Transformer._generate_next()")
 
         word_idxs = [self.word2idx(word) for word in text.lower().split()]
-        # init_endline_bias = model.layers[-2].weights[1][self.word2idx("endline")]
-        # init_endfile_bias = model.layers[-2].weights[1][self.word2idx("endfile")]
-        for i in range(num_generated):
-            prediction = model.predict(x=np.array(word_idxs))
-            max_cl = 0
-            max_indx = 0
-            samples = prediction[-1] if title else prediction[-1][0]
-            for ind, item in enumerate(samples):  ## TODO plz fix this for title model
-                if item > max_cl:
-                    max_cl = item
-                    max_indx = ind
+        print(word_idxs)
+        prediction = decode(
+                            model,
+                            word_idxs,
+                            start_token = self.word2idx(self._startToken),
+                            end_token = self.word2idx(self._endToken),
+                            pad_token = self.word2idx(self._padToken),
+                            max_len = num_generated,
+                            top_k = 10,
+                            temperature = 1.0
+                    )
 
-            idx = self._sample(samples, temperature=0.7)
-            word_idxs.append(idx)
+        # for i in range(num_generated):
+        #     prediction = decode(
+        #                         model,
+        #                         np.array(word_idxs),
+        #                         start_token = self.word2idx(self._startToken),
+        #                         end_token = self.word2idx(self._endToken),
+        #                         pad_token = self.word2idx(self._padToken),
+        #                         max_len = num_generated,
+        #                         top_k = 10,
+        #                         temperature = 1.0
+        #                 )
+        #     prediction = model.predict(x=np.array(word_idxs))
+        #     max_cl = 0
+        #     max_indx = 0
+        #     samples = prediction[-1] if title else prediction[-1][0]
+        #     for ind, item in enumerate(samples):  ## TODO plz fix this for title model
+        #         if item > max_cl:
+        #             max_cl = item
+        #             max_indx = ind
 
-            if self.idx2word(idx) == "endfile" or (title and self.idx2word(idx) == "endline"):
-                break
+        #     idx = self._sample(samples, temperature=0.7)
+        #     word_idxs.append(idx)
 
-        return ' '.join(self.idx2word(idx) for idx in word_idxs)
+        #     if self.idx2word(idx) == "endfile" or (title and self.idx2word(idx) == "endline"):
+        #         break
+
+        return ' '.join(self.idx2word(idx) for idx in word_idxs + prediction)
 
     ## Take prediction vector, return the index of most likely class
     def _sample(self, preds, temperature=1.0):
