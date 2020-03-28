@@ -79,9 +79,9 @@ for i in range(1, len(tokens) - 1):
     encode_tokens = ['<START>'] + encode_tokens + ['<END>'] + ['<PAD>'] * (len(tokens) - len(encode_tokens))
     output_tokens = decode_tokens + ['<END>', '<PAD>'] + ['<PAD>'] * (len(tokens) - len(decode_tokens))
     decode_tokens = ['<START>'] + decode_tokens + ['<END>'] + ['<PAD>'] * (len(tokens) - len(decode_tokens))
-    encode_tokens = list(map(lambda x: token_dict[x], encode_tokens))
-    decode_tokens = list(map(lambda x: token_dict[x], decode_tokens))
-    output_tokens = list(map(lambda x: [token_dict[x]], output_tokens))
+    # encode_tokens = list(map(lambda x: token_dict[x], encode_tokens))
+    # decode_tokens = list(map(lambda x: token_dict[x], decode_tokens))
+    # output_tokens = list(map(lambda x: [token_dict[x]], output_tokens))
     encoder_inputs_no_padding.append(encode_tokens[:i + 2])
     encoder_inputs.append(encode_tokens)
     decoder_inputs.append(decode_tokens)
@@ -106,11 +106,25 @@ model.compile(
 )
 model.summary()
 
+print("Vocab size: {}".format(len(token_dict)))
+print("Seq size: {}".format(len(tokens)))
+print("Encoder input shape: {}".format(np.asarray(encoder_inputs).shape))
+print("Decoder input shape: {}".format(np.asarray(decoder_inputs).shape))
+print("Decoder output shape: {}".format(np.asarray(decoder_outputs).shape))
+print("Enc for prediction: {}".format(np.asarray(encoder_inputs_no_padding).shape))
+
+for x, y, z in zip(encoder_inputs, decoder_inputs, decoder_outputs):
+    print(x)
+    print(y)
+    print(z)
+    print("\n\n\n\n")
+
 # Train the model
 model.fit(
-    x=[np.asarray(encoder_inputs * 10), np.asarray(decoder_inputs * 10)],
-    y=np.asarray(decoder_outputs * 10),
-    epochs=20,
+    x=[np.asarray(encoder_inputs), np.asarray(decoder_inputs)],
+    y=np.asarray(decoder_outputs),
+    epochs=70,
+    batch_size = 4
 )
 
 
@@ -130,5 +144,6 @@ for i in range(len(decoded)):
     print("SEQ START")
     print(' '.join(map(lambda x: token_dict_rev[x], encoder_inputs_no_padding[i])))
     print(' '.join(map(lambda x: token_dict_rev[x], decoded[i])))
-    print("SEQ END")
+    print(decoded[i])
+    print("SEQ END\n\n")
 
