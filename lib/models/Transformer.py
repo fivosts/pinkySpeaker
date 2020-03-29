@@ -772,9 +772,9 @@ def runTransformer(raw_data):
     ckpt_manager = tf.train.CheckpointManager(ckpt, checkpoint_path, max_to_keep=5)
 
     # if a checkpoint exists, restore the latest checkpoint.
-    if ckpt_manager.latest_checkpoint:
-        ckpt.restore(ckpt_manager.latest_checkpoint)
-        print ('Latest checkpoint restored!!')
+    # if ckpt_manager.latest_checkpoint:
+    #     ckpt.restore(ckpt_manager.latest_checkpoint)
+    #     print ('Latest checkpoint restored!!')
 
     EPOCHS = 20
 
@@ -858,15 +858,6 @@ def runTransformer(raw_data):
     predicted_sentence = translate(seed_sentence, transformer, plot="decoder_layer4_block2") ## START and END token
     print("Seed sentence: {}\nReal target: {}\nModel prediction: {}".format(seed_sentence, real_sentence, predicted_sentence))
     exit(1)
-    # translate("este é um problema que temos que resolver.")
-    # print ("Real translation: this is a problem we have to solve .")
-
-    # translate("os meus vizinhos ouviram sobre esta ideia.")
-    # print ("Real translation: and my neighboring homes heard about this idea .")
-
-    # translate("vou então muito rapidamente partilhar convosco algumas histórias de algumas coisas mágicas que aconteceram.")
-    # print ("Real translation: so i 'll just share with you some stories very quickly of some magical things that have happened .")
-
 
     # translate("este é o primeiro livro que eu fiz.", plot='decoder_layer4_block2')
     # print ("Real translation: this is the first book i've ever done.")
