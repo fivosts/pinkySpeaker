@@ -514,17 +514,18 @@ def runTransformer(raw_data):
 
 
     tokenizer_en = tfds.features.text.SubwordTextEncoder.build_from_corpus(
-                 (x.numpy() for sublist in temp_dataset for x, _ in sublist), target_vocab_size = 2**12)
+                 (x.numpy() for sublist in temp_dataset for x, _ in sublist), target_vocab_size = 2**13)
 
 
     tokenizer_pt = tfds.features.text.SubwordTextEncoder.build_from_corpus(
-                    (x.numpy() for sublist in temp_dataset for x, _ in sublist), target_vocab_size = 2**12)
+                    (x.numpy() for sublist in temp_dataset for x, _ in sublist), target_vocab_size = 2**13)
 
     for file in os.listdir(path):
         line = tf.data.TextLineDataset(pt.join(path, file))
         for l in line:
             if l.numpy().decode("utf-8")  != "":
-                src_dataset.append(([tokenizer_en.vocab_size] + tokenizer_en.encode(l.numpy()) + [tokenizer_en.vocab_size + 1], [tokenizer_en.vocab_size] + tokenizer_en.encode("".join(random_lines[randint(0, len(random_lines) - 1)])) + [tokenizer_en.vocab_size + 1]))
+                # src_dataset.append(([tokenizer_en.vocab_size] + tokenizer_en.encode(l.numpy()) + [tokenizer_en.vocab_size + 1], [tokenizer_en.vocab_size] + tokenizer_en.encode("".join(random_lines[randint(0, len(random_lines) - 1)])) + [tokenizer_en.vocab_size + 1]))
+                src_dataset.append(([tokenizer_en.vocab_size] + tokenizer_en.encode(l.numpy()) + [tokenizer_en.vocab_size + 1], [tokenizer_en.vocab_size] + tokenizer_en.encode(l.numpy()) + [tokenizer_en.vocab_size + 1]))
 
     # examples, metadata = tfds.load('ted_hrlr_translate/pt_to_en', with_info=True,
     #                                                              as_supervised=True)
