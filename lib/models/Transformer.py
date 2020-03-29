@@ -497,8 +497,7 @@ def runTransformer(raw_data):
     for file in os.listdir(path):
         with open(pt.join(path, file), 'r') as f:
             lines = f.readlines()
-            lines = [x.replace("\n", "") for x in lines]
-            print(lines)
+            lines = [x.replace("\n", "") for x in lines if x.replace("\n", "") != ""]
             random_lines += lines
     # random_lines = [x for sublist in random_lines for x in sublist]
 
@@ -524,7 +523,8 @@ def runTransformer(raw_data):
     for file in os.listdir(path):
         line = tf.data.TextLineDataset(pt.join(path, file))
         for l in line:
-            src_dataset.append(([tokenizer_en.vocab_size] + tokenizer_en.encode(l.numpy()) + [tokenizer_en.vocab_size + 1], [tokenizer_en.vocab_size] + tokenizer_en.encode("".join(random_lines[randint(0, len(random_lines) - 1)])) + [tokenizer_en.vocab_size + 1]))
+            if l.numpy().decode("utf-8")  != "":
+                src_dataset.append(([tokenizer_en.vocab_size] + tokenizer_en.encode(l.numpy()) + [tokenizer_en.vocab_size + 1], [tokenizer_en.vocab_size] + tokenizer_en.encode("".join(random_lines[randint(0, len(random_lines) - 1)])) + [tokenizer_en.vocab_size + 1]))
 
     # examples, metadata = tfds.load('ted_hrlr_translate/pt_to_en', with_info=True,
     #                                                              as_supervised=True)
@@ -554,7 +554,7 @@ def runTransformer(raw_data):
 
 
 
-    sample_string = 'Transformer is awesome.'
+    sample_string = 'Hello? Is there anybody out there? Is there anyone at home?'
 
     tokenized_string = tokenizer_en.encode(sample_string)
     print ('Tokenized string is {}'.format(tokenized_string))
@@ -851,7 +851,7 @@ def runTransformer(raw_data):
 
     ## Run 20 times and see how it works....
 
-    for i in range(2):
+    for i in range(20):
         line_index = randint(0, len(src_dataset) - 1)
         seed_sentence, real_sentence = src_dataset[line_index]
         seed_sentence = tokenizer_en.decode(seed_sentence[1:-1])
