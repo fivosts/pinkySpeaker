@@ -805,7 +805,7 @@ def runTransformer(raw_data):
         train_accuracy(tar_real, predictions)
 
 
-    for epoch in range(20):
+    for epoch in range(EPOCHS):
         start = time.time()
         
         train_loss.reset_states()
@@ -827,7 +827,6 @@ def runTransformer(raw_data):
             if batch % 50 == 0:
                 print ('Epoch {} Batch {} Loss {:.4f} Accuracy {:.4f}'.format(
                         epoch + 1, batch, train_loss.result(), train_accuracy.result()))
-                break
 
         if (epoch + 1) % 5 == 0:
             ckpt_save_path = ckpt_manager.save()
