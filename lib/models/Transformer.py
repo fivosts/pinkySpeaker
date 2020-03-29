@@ -841,7 +841,7 @@ def runTransformer(raw_data):
 
     ## Run 20 times and see how it works....
 
-    for i in range(2):
+    for i in range(20):
         line_index = randint(0, len(src_dataset) - 1)
         seed_sentence, real_sentence = src_dataset[line_index]
         seed_sentence = tokenizer_en.decode(seed_sentence[1:-1])
