@@ -493,9 +493,14 @@ def runTransformer(raw_data):
     path = "/home/fivosts/PhD/Code/pinkySpeaker/dataset/pink_floyd"
     temp_dataset = []
     src_dataset = []
-    random_lines = [x for sublist in raw_data for x in [sublist['title']] + sublist['lyrics']]
+    random_lines = []
+    for file in os.listdir(path):
+        with open(pt.join(path, file), 'r') as f:
+            lines = f.readlines()
+            lines = [x.replace("\n", "") for x in lines]
+            print(lines)
+            random_lines += lines
     # random_lines = [x for sublist in random_lines for x in sublist]
-
 
     def labeler(example):
         return example, random_lines[randint(0, len(random_lines) - 1)]
@@ -519,7 +524,7 @@ def runTransformer(raw_data):
     for file in os.listdir(path):
         line = tf.data.TextLineDataset(pt.join(path, file))
         for l in line:
-            src_dataset.append(([tokenizer_en.vocab_size] + tokenizer_en.encode(l.numpy()) + [tokenizer_en.vocab_size + 1], [tokenizer_en.vocab_size] + tokenizer_en.encode(" ".join(random_lines[randint(0, len(random_lines) - 1)])) + [tokenizer_en.vocab_size + 1]))
+            src_dataset.append(([tokenizer_en.vocab_size] + tokenizer_en.encode(l.numpy()) + [tokenizer_en.vocab_size + 1], [tokenizer_en.vocab_size] + tokenizer_en.encode("".join(random_lines[randint(0, len(random_lines) - 1)])) + [tokenizer_en.vocab_size + 1]))
 
     # examples, metadata = tfds.load('ted_hrlr_translate/pt_to_en', with_info=True,
     #                                                              as_supervised=True)
@@ -806,42 +811,47 @@ def runTransformer(raw_data):
 
 
     for epoch in range(EPOCHS):
-        start = time.time()
-        
-        train_loss.reset_states()
-        train_accuracy.reset_states()
-        
-        # inp -> portuguese, tar -> english
-        for (batch, (inp, tar)) in enumerate(train_dataset):
 
-            # print(len(inp))
-            # print(len(tar))
-            # print(batch)
-
-            new_inp = tf.convert_to_tensor([[x for x in inp]], dtype = tf.int64)
-            new_tar = tf.convert_to_tensor([[x for x in tar]], dtype = tf.int64)
-            # print(new_inp)
-            # print(new_tar)
-            train_step(new_inp, new_tar)
+        try:
+            start = time.time()
             
-            if batch % 50 == 0:
-                print ('Epoch {} Batch {} Loss {:.4f} Accuracy {:.4f}'.format(
-                        epoch + 1, batch, train_loss.result(), train_accuracy.result()))
-
-        if (epoch + 1) % 5 == 0:
-            ckpt_save_path = ckpt_manager.save()
-            print ('Saving checkpoint for epoch {} at {}'.format(epoch+1, ckpt_save_path))
+            train_loss.reset_states()
+            train_accuracy.reset_states()
             
-        print ('Epoch {} Loss {:.4f} Accuracy {:.4f}'.format(epoch + 1, 
-                                                                                                    train_loss.result(), 
-                                                                                                    train_accuracy.result()))
+            # inp -> portuguese, tar -> english
+            for (batch, (inp, tar)) in enumerate(train_dataset):
 
-        print ('Time taken for 1 epoch: {} secs\n'.format(time.time() - start))
+                # print(len(inp))
+                # print(len(tar))
+                # print(batch)
+
+                new_inp = tf.convert_to_tensor([[x for x in inp]], dtype = tf.int64)
+                new_tar = tf.convert_to_tensor([[x for x in tar]], dtype = tf.int64)
+                # print(new_inp)
+                # print(new_tar)
+                train_step(new_inp, new_tar)
+                
+                if batch % 50 == 0:
+                    print ('Epoch {} Batch {} Loss {:.4f} Accuracy {:.4f}'.format(
+                            epoch + 1, batch, train_loss.result(), train_accuracy.result()))
+
+            if (epoch + 1) % 5 == 0:
+                ckpt_save_path = ckpt_manager.save()
+                print ('Saving checkpoint for epoch {} at {}'.format(epoch+1, ckpt_save_path))
+                
+            print ('Epoch {} Loss {:.4f} Accuracy {:.4f}'.format(epoch + 1, 
+                                                                                                        train_loss.result(), 
+                                                                                                        train_accuracy.result()))
+
+            print ('Time taken for 1 epoch: {} secs\n'.format(time.time() - start))
+
+        except KeyboardInterrupt:
+            continue
 
 
     ## Run 20 times and see how it works....
 
-    for i in range(20):
+    for i in range(2):
         line_index = randint(0, len(src_dataset) - 1)
         seed_sentence, real_sentence = src_dataset[line_index]
         seed_sentence = tokenizer_en.decode(seed_sentence[1:-1])
