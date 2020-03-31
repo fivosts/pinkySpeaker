@@ -15,9 +15,9 @@ MAX_LENGTH = 40
 
 tokenizer = None
 
-def runTransformer(target = "greeklish"):
+def runTransformer(target = "greeklish", datapath = "../dataset/pink_floyd", dummy_file = "dummy_target.txt"):
 
-    path = "../dataset/pink_floyd"
+    path = datapath
     temp_dataset = []
     src_dataset = []
     random_lines = []
@@ -43,7 +43,7 @@ def runTransformer(target = "greeklish"):
     ## These extra sentences HAVE to be inserted to the tokenizer
     ## so they can be included in the vocab
     if target == "greeklish":
-        random_targets = tf.data.TextLineDataset("dummy_target.txt")
+        random_targets = tf.data.TextLineDataset(dummy_file)
         random_target_list = [x for x in random_targets]
         temp_dataset.append(random_targets)
 
