@@ -7,7 +7,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 BUFFER_SIZE = 20000
-BATCH_SIZE = 64
+BATCH_SIZE = 1
 MAX_LENGTH = 40
 
 
@@ -514,7 +514,12 @@ val_preprocessed = (
         .filter(filter_max_length))
 
 
-
+print(train_preprocessed)
+print(type(train_preprocessed))
+for i in train_preprocessed:
+    print(i)
+    print(type(i))
+    exit()
 train_dataset = (train_preprocessed
                                  .padded_batch(BATCH_SIZE, padded_shapes=([None], [None]))
                                  .prefetch(tf.data.experimental.AUTOTUNE))
@@ -570,7 +575,7 @@ plt.xlabel('Depth')
 plt.xlim((0, 512))
 plt.ylabel('Position')
 plt.colorbar()
-plt.show()
+# plt.show()
 
 
 
@@ -829,6 +834,9 @@ for epoch in range(EPOCHS):
     
     # inp -> portuguese, tar -> english
     for (batch, (inp, tar)) in enumerate(train_dataset):
+
+        print(tokenizer_pt.decode(inp[0][1:-1].numpy()))
+        print(tokenizer_en.decode(tar[0][1:-1].numpy()))
         train_step(inp, tar)
         
         if batch % 50 == 0:
