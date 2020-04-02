@@ -131,7 +131,8 @@ class TfTransformer:
 
         tokenizer = tfds.features.text.SubwordTextEncoder.build_from_corpus(
                     (x.numpy() for x, _ in str_dataset),
-                    target_vocab_size = target_vocab_size
+                    target_vocab_size = target_vocab_size,
+                    reserved_tokens = ["<ENDLINE>", "endfile"]
         )
         self._tokSanityCheck(tokenizer, "This is a comfortably numb tokenizer ?!")
         return tokenizer
@@ -143,7 +144,7 @@ class TfTransformer:
 
         tokenized_string = tokenizer.encode(sample_string)
         original_string = tokenizer.decode(tokenized_string)
-
+        tokenizer.get_logger().setLevel('WARNING')
         self._logger.info('Tokenized string is {}'.format(tokenized_string))
         self._logger.info('The original string: {}'.format(original_string))
 
@@ -353,7 +354,7 @@ class TfTransformer:
         song_sample_weight = [[     0 if x == self._padToken
                                else 0 if x == self._startToken
                                else 50 if x == self._endToken 
-                               else 10 if x == "endline" 
+                               else 10 if x == "<ENDLINE>" 
                                else 1 for x in inp] 
                             for inp in encoder_input]
 
@@ -364,7 +365,7 @@ class TfTransformer:
         clw = {}
         for i in range(vocab_size):
             clw[i] = 1
-        clw[self.word2idx("endline")] = 50
+        clw[self.word2idx("<ENDLINE>")] = 50
         return clw
 
     ## Receive a word, return the index in the vocabulary
@@ -382,7 +383,7 @@ class TfTransformer:
         ret[idx] = 1000
         return ret
 
-    ## Converts "endline" to '\n' for pretty printing
+    ## Converts "<ENDLINE>" to '\n' for pretty printing
     ## Also masks meta-tokens but throws a warning
     def _prettyPrint(self, text):
         self._logger.debug("pinkySpeaker.lib.model.TfTransformer._prettyPrint()")
@@ -391,10 +392,10 @@ class TfTransformer:
             self._logger.warning("</START> has been found to generated text!")
         if self._padToken in text:
             self._logger.warning("</PAD> has been found to generated text!")
-        if "endline" in text:
+        if "<ENDLINE>" in text:
             self._logger.warning("Endline found in text!")
 
-        return text.replace("endline ", "\n")
+        return text.replace("<ENDLINE> ", "\n")
 
     ## Just fit it!
     def fit(self, epochs = 50, save_model = None):
@@ -545,7 +546,7 @@ class TfTransformer:
         #     idx = self._sample(samples, temperature=0.7)
         #     word_idxs.append(idx)
 
-        #     if self.idx2word(idx) == "endfile" or (title and self.idx2word(idx) == "endline"):
+        #     if self.idx2word(idx) == "endfile" or (title and self.idx2word(idx) == "<ENDLINE>"):
         #         break
 
         return ' '.join(self.idx2word(idx) for idx in word_idxs + prediction)
