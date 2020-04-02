@@ -152,6 +152,8 @@ class TfTransformer:
         self._tokSanityCheck(tokenizer, "This is a comfortably numb tokenizer ?!")
         return tokenizer
 
+    ## Take tokenizer and a sample string
+    ## Encode, decode and check decoded string is still the same as the original
     def _tokSanityCheck(self, tokenizer, sample_string):
         self._logger.debug("pinkySpeaker.lib.model.TfTransformer._tokSanityCheck()")
 
@@ -166,6 +168,21 @@ class TfTransformer:
 
         assert original_string == sample_string
         return
+
+    def _preprocessDataset(self, str_dataset, batch_size, buffer_size = 20000):
+
+        preprocessed_dataset = (
+                    str_dataset
+                    .map(tf_encode)
+                    .cache()
+                    .shuffle(buffer_size)  
+        )
+        dataset = (
+                    preprocessed_dataset
+                    .padded_batch(batch_size, padded_shapes = ([None], [None]))
+                    .prefetch(tf.data.experimental.AUTOTUNE)
+        )
+        return dataset
 
     ## Initialize and return word model
     def _initWordModel(self, inp_sentences):
