@@ -145,6 +145,7 @@ def evaluate(inp_sentence, transformer):
 
     return tf.squeeze(output, axis=0), attention_weights
 
+## TODO move this to plotter
 def plot_attention_weights(attention, sentence, result, layer):
     fig = plt.figure(figsize=(16, 8))
     
@@ -173,7 +174,7 @@ def plot_attention_weights(attention, sentence, result, layer):
     plt.tight_layout()
     plt.show()
 
-
+## TODO rename this to predict and move to tf.transformer
 def translate(sentence, transformer, plot=''):
     result, attention_weights = evaluate(sentence, transformer)
     predicted_sentence = tokenizer.decode([i for i in result if i < tokenizer.vocab_size])    
