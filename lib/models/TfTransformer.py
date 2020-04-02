@@ -17,13 +17,13 @@ from keras.layers import Dense, Activation, TimeDistributed, Dropout
 
 from keras_transformer import get_model, decode
 
-class Transformer:
+class TfTransformer:
 
     _logger = None
 
     def __init__(self, data = None, model = None, LSTM_Depth = 3, sequence_length = 30):
         self._logger = l.getLogger()
-        self._logger.debug("pinkySpeaker.lib.model.Transformer.__init__()")
+        self._logger.debug("pinkySpeaker.lib.model.TfTransformer.__init__()")
 
         ## _dataset and _model are the two member variables of the class
         self._raw_data = data
@@ -44,7 +44,7 @@ class Transformer:
         return
 
     def _initArchitecture(self, raw_data):
-        self._logger.debug("pinkySpeaker.lib.model.Transformer._initArchitecture()")
+        self._logger.debug("pinkySpeaker.lib.model.TfTransformer._initArchitecture()")
 
         vocab_size, max_title_length, all_titles_length, inp_sentences = self._initNNModel(raw_data)
         self._initDataset(raw_data, vocab_size, max_title_length, all_titles_length, inp_sentences)
@@ -52,7 +52,7 @@ class Transformer:
         return
 
     def _initNNModel(self, raw_data):
-        self._logger.debug("pinkySpeaker.lib.model.Transformer._initNNModel()")
+        self._logger.debug("pinkySpeaker.lib.model.TfTransformer._initNNModel()")
         self._logger.info("Initialize NN Model")
 
         inp_sent, max_title_length, all_titles_length = self._constructSentences(raw_data)
@@ -79,7 +79,7 @@ class Transformer:
                }
 
     def _initDataset(self, raw_data, vocab_size, mx_t_l, all_t_l, inp_sent):
-        self._logger.debug("pinkySpeaker.lib.model.Transformer._initDataset()")
+        self._logger.debug("pinkySpeaker.lib.model.TfTransformer._initDataset()")
 
         lyric_set = self._constructTLSet(raw_data, vocab_size, mx_t_l, all_t_l)
 
@@ -94,7 +94,7 @@ class Transformer:
         return   
 
     def _initWordModel(self, inp_sentences):
-        self._logger.debug("pinkySpeaker.lib.model.Transformer._initWordModel()")
+        self._logger.debug("pinkySpeaker.lib.model.TfTransformer._initWordModel()")
         inp_sentences.append([self._padToken]) # Token that ensembles masking of training weights. Used to pad sequence length
         inp_sentences.append([self._startToken]) # Token that ensembles the start of a sequence
         wm = gensim.models.Word2Vec(inp_sentences, size = 300, min_count = 1, window = 4, iter = 200)
@@ -102,7 +102,7 @@ class Transformer:
         return wm
 
     def _initTitleModel(self, weights, LSTM_Depth):
-        self._logger.debug("pinkySpeaker.lib.model.Transformer._initTitleModel()")
+        self._logger.debug("pinkySpeaker.lib.model.TfTransformer._initTitleModel()")
 
         vocab_size, embedding_size = weights.shape
         tm = Sequential()
@@ -122,7 +122,7 @@ class Transformer:
         return tm
 
     def _initLyricModel(self, weights):
-        self._logger.debug("pinkySpeaker.lib.model.Transformer._initLyricModel()")
+        self._logger.debug("pinkySpeaker.lib.model.TfTransformer._initLyricModel()")
 
         vocab_size, embedding_size = weights.shape
 
@@ -147,7 +147,7 @@ class Transformer:
         return lm
 
     def _setClassWeight(self, vocab_size):
-        self._logger.debug("pinkySpeaker.lib.model.Transformer._setClassWeight()")
+        self._logger.debug("pinkySpeaker.lib.model.TfTransformer._setClassWeight()")
         clw = {}
         for i in range(vocab_size):
             clw[i] = 1
@@ -156,7 +156,7 @@ class Transformer:
         return clw
 
     def _constructSentences(self, raw_data):
-        self._logger.debug("pinkySpeaker.lib.model.Transformer._constructSentences()")
+        self._logger.debug("pinkySpeaker.lib.model.TfTransformer._constructSentences()")
         self._logger.info("Sentence preprocessing for word model")
 
         sentence_size = 10
@@ -178,14 +178,14 @@ class Transformer:
         return self._listToChunksList(words, sentence_size), max_title_length, all_titles_length
 
     def _listToChunksList(self, lst, n):
-        self._logger.debug("pinkySpeaker.lib.model.Transformer._listToChunksList()")
+        self._logger.debug("pinkySpeaker.lib.model.TfTransformer._listToChunksList()")
         chunk_list = []
         for i in range(0, len(lst), n):
             chunk_list.append(lst[i: i + n])
         return chunk_list
 
     def _constructTLSet(self, raw_data, vocab_size, max_title_length, all_titles_length):
-        self._logger.debug("pinkySpeaker.lib.model.Transformer._constructTLSet()")
+        self._logger.debug("pinkySpeaker.lib.model.TfTransformer._constructTLSet()")
 
         # lyric_set = {
         #              'input'            : np.zeros([2, len(raw_data), self._lyric_sequence_length], dtype = np.int32),
@@ -230,13 +230,13 @@ class Transformer:
 
     ## Receives an input tensor and returns an elem-by-elem softmax computed vector of the same dims
     def _softmax(self, inp_tensor):
-        self._logger.debug("pinkySpeaker.lib.model.Transformer._softmax()")
+        self._logger.debug("pinkySpeaker.lib.model.TfTransformer._softmax()")
         m = np.max(inp_tensor)
         e = np.exp(inp_tensor - m)
         return e / np.sum(e)
 
     def _splitSongtoSentence(self, curr_song):
-        self._logger.debug("pinkySpeaker.lib.model.Transformer._splitSongtoSentence()")
+        self._logger.debug("pinkySpeaker.lib.model.TfTransformer._splitSongtoSentence()")
         
         step = self._lyric_sequence_length - 1
 
@@ -259,7 +259,7 @@ class Transformer:
         return encoder_input, decoder_input, decoder_output, song_sample_weight
 
     def _setClassWeight(self, vocab_size):
-        self._logger.debug("pinkySpeaker.lib.model.Transformer._setClassWeight()")
+        self._logger.debug("pinkySpeaker.lib.model.TfTransformer._setClassWeight()")
         clw = {}
         for i in range(vocab_size):
             clw[i] = 1
@@ -268,15 +268,15 @@ class Transformer:
 
     ## Receive a word, return the index in the vocabulary
     def word2idx(self, word):
-        self._logger.debug("pinkySpeaker.lib.model.Transformer.word2idx()")
+        self._logger.debug("pinkySpeaker.lib.model.TfTransformer.word2idx()")
         return self._model['word_model'].wv.vocab[word].index
     ## Receive a vocab index, return the workd
     def idx2word(self, idx):
-        self._logger.debug("pinkySpeaker.lib.model.Transformer.idx2word()")
+        self._logger.debug("pinkySpeaker.lib.model.TfTransformer.idx2word()")
         return self._model['word_model'].wv.index2word[idx]
     ## Receive a vocab index, return its one hot vector
     def idx2onehot(self, idx, size):
-        self._logger.debug("pinkySpeaker.lib.model.Transformer.idx2onehot()")
+        self._logger.debug("pinkySpeaker.lib.model.TfTransformer.idx2onehot()")
         ret = np.zeros(size)
         ret[idx] = 1000
         return ret
@@ -284,7 +284,7 @@ class Transformer:
     ## Converts "endline" to '\n' for pretty printing
     ## Also masks meta-tokens but throws a warning
     def _prettyPrint(self, text):
-        self._logger.debug("pinkySpeaker.lib.model.Transformer._prettyPrint()")
+        self._logger.debug("pinkySpeaker.lib.model.TfTransformer._prettyPrint()")
 
         if self._startToken in text:
             self._logger.warning("</START> has been found to generated text!")
@@ -297,7 +297,7 @@ class Transformer:
 
     ## Just fit it!
     def fit(self, epochs = 50, save_model = None):
-        self._logger.debug("pinkySpeaker.lib.model.Transformer.fit()")
+        self._logger.debug("pinkySpeaker.lib.model.TfTransformer.fit()")
 
         # Build a small toy token dictionary
         tokens = 'all work and no play makes jack a dull boy'.split(' ')
@@ -343,7 +343,7 @@ class Transformer:
 
     ## Run a model prediction based on sample input
     def predict(self, seed, load_model = None):
-        self._logger.debug("pinkySpeaker.lib.model.Transformer.predict()")
+        self._logger.debug("pinkySpeaker.lib.model.TfTransformer.predict()")
 
         if not self._model and not load_model:
             self._logger.critical("Load model path has not been provided! Predict failed!")
@@ -365,7 +365,7 @@ class Transformer:
 
     ## Booting callback on title generation between epochs
     def _title_per_epoch(self, epoch, _):
-        self._logger.debug("pinkySpeaker.lib.model.Transformer._title_per_epoch()")
+        self._logger.debug("pinkySpeaker.lib.model.TfTransformer._title_per_epoch()")
 
         self._logger.info('\nGenerating text after epoch: %d' % epoch)
         texts = [
@@ -386,7 +386,7 @@ class Transformer:
 
     ## Booting callback on lyric generation between epochs
     def _lyrics_per_epoch(self, epoch, _):
-        self._logger.debug("pinkySpeaker.lib.model.Transformer._lyrics_per_epoch()")
+        self._logger.debug("pinkySpeaker.lib.model.TfTransformer._lyrics_per_epoch()")
 
         self._logger.info('\nGenerating text after epoch: %d' % epoch)
         texts = [
@@ -406,7 +406,7 @@ class Transformer:
 
     ## Model sampling setup function
     def _generate_next(self, text, model, title, num_generated = 320):
-        self._logger.debug("pinkySpeaker.lib.model.Transformer._generate_next()")
+        self._logger.debug("pinkySpeaker.lib.model.TfTransformer._generate_next()")
 
         word_idxs = [self.word2idx(word) for word in text.lower().split()]
         print(word_idxs)
@@ -451,7 +451,7 @@ class Transformer:
 
     ## Take prediction vector, return the index of most likely class
     def _sample(self, preds, temperature=1.0):
-        self._logger.debug("pinkySpeaker.lib.model.Transformer._sample()")
+        self._logger.debug("pinkySpeaker.lib.model.TfTransformer._sample()")
 
         if temperature <= 0:
             return np.argmax(preds)
