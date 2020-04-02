@@ -280,6 +280,7 @@ def runTransformer(target = "greeklish", datapath = "../dataset/pink_floyd", dum
 
     learning_rate = CustomSchedule(d_model)
 
+    ## Important
     optimizer = tf.keras.optimizers.Adam(learning_rate, beta_1=0.9, beta_2=0.98, epsilon=1e-9)
 
     temp_learning_rate_schedule = CustomSchedule(d_model)
@@ -288,10 +289,13 @@ def runTransformer(target = "greeklish", datapath = "../dataset/pink_floyd", dum
     plt.ylabel("Learning Rate")
     plt.xlabel("Train Step")
 
+    ## Important
     loss_object = tf.keras.losses.SparseCategoricalCrossentropy(
             from_logits=True, reduction='none')
 
+    ## Important
     train_loss = tf.keras.metrics.Mean(name='train_loss')
+    ## Important
     train_accuracy = tf.keras.metrics.SparseCategoricalAccuracy(
             name='train_accuracy')
 
