@@ -33,7 +33,7 @@ class TfTransformer:
         self._lyric_sequence_length = sequence_length
 
         self._startToken = "</START>"
-        self._endToken = "endfile" ## TODO
+        self._endToken = "</END>" ## TODO
         self._padToken = "</PAD>"
 
         if data:
@@ -251,7 +251,7 @@ class TfTransformer:
 
         song_sample_weight = [[     0 if x == self._padToken
                                else 0 if x == self._startToken
-                               else 50 if x == "endfile" 
+                               else 50 if x == self._endToken 
                                else 10 if x == "endline" 
                                else 1 for x in inp] 
                             for inp in encoder_input]
@@ -293,7 +293,7 @@ class TfTransformer:
         if "endline" in text:
             self._logger.warning("Endline found in text!")
 
-        return text.replace("endline ", "\n").replace("endfile", "\nEND")
+        return text.replace("endline ", "\n")
 
     ## Just fit it!
     def fit(self, epochs = 50, save_model = None):
