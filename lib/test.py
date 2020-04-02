@@ -112,12 +112,9 @@ def runTransformer(target = "greeklish", datapath = "../dataset/pink_floyd", dum
 
                 # new_inp = tf.convert_to_tensor([[x for x in inp]], dtype = tf.int64)
 
-
     tf_dataset = src_dataset[0]
     for d in src_dataset[1:]:
         tf_dataset = tf_dataset.concatenate(d)
-
-
 
     train_preprocessed = (
             tf_dataset
@@ -131,20 +128,23 @@ def runTransformer(target = "greeklish", datapath = "../dataset/pink_floyd", dum
                                      .padded_batch(BATCH_SIZE, padded_shapes=([None], [None]))
                                      .prefetch(tf.data.experimental.AUTOTUNE))
 
-    print(train_dataset)
-    print(type(train_dataset))
-    for tupl in train_dataset:
-        print(tupl)
-        print(type(tupl))
-        for item in tupl:
-            print(item)
-            for element in item:
-                print(tokenizer.decode([x for x in element if x < 4384]))
+    val_dataset = (train_preprocessed
+                             .padded_batch(BATCH_SIZE,    padded_shapes=([None], [None])))
 
-            # print([tokenizer.decode([x for x in l if x < 4384]) for l in item for x in l])
-            print(type(item))
-        break
-    exit()
+    # print(train_dataset)
+    # print(type(train_dataset))
+    # for tupl in train_dataset:
+    #     print(tupl)
+    #     print(type(tupl))
+    #     for item in tupl:
+    #         print(item)
+    #         for element in item:
+    #             print(tokenizer.decode([x for x in element if x < 4384]))
+
+    #         # print([tokenizer.decode([x for x in l if x < 4384]) for l in item for x in l])
+    #         print(type(item))
+    #     break
+    # exit()
     ## Just skip validation examples for now
     train_dataset = src_dataset
 
@@ -162,7 +162,7 @@ def runTransformer(target = "greeklish", datapath = "../dataset/pink_floyd", dum
     for ts in tokenized_string:
         print ('{} ----> {}'.format(ts, tokenizer.decode([ts])))
 
-    pt_batch, en_batch = train_dataset[1]
+    pt_batch, en_batch = next(iter(val_dataset))
 
     pos_encoding = positional_encoding(50, 512)
 
@@ -172,14 +172,6 @@ def runTransformer(target = "greeklish", datapath = "../dataset/pink_floyd", dum
     plt.ylabel('Position')
     plt.colorbar()
     # plt.show()
-
-
-    print(train_dataset)
-    print(type(train_dataset))
-    for i in train_dataset:
-        print(i)
-        print(type(i))
-        exit()
 
     ## Now some sanity-check executions of the classes
     x = tf.constant([[7, 6, 0, 0, 1], [1, 2, 3, 0, 0], [0, 0, 0, 4, 5]])
@@ -366,7 +358,6 @@ def runTransformer(target = "greeklish", datapath = "../dataset/pink_floyd", dum
             train_loss.reset_states()
             train_accuracy.reset_states()
             
-            shuffle(train_dataset)
             # inp -> portuguese, tar -> english
             for (batch, (inp, tar)) in enumerate(train_dataset):
 
