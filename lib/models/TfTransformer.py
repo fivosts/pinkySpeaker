@@ -24,7 +24,7 @@ class TfTransformer:
 
     _logger = None
 
-    def __init__(self, data = None, model = None, LSTM_Depth = 3, sequence_length = 30):
+    def __init__(self, data = None, model = None, batch_size = 4, LSTM_Depth = 3, sequence_length = 30):
         self._logger = l.getLogger()
         self._logger.debug("pinkySpeaker.lib.model.TfTransformer.__init__()")
 
@@ -40,17 +40,17 @@ class TfTransformer:
         self._padToken = "</PAD>"
 
         if data:
-            self._initArchitecture(data)
+            self._initArchitecture(data, batch_size)
         elif model:
             self._model = self._loadNNModel(model)
         self._logger.info("TfTransformer model")
         return
 
     ## Booting function of NN Model + dataset initialization
-    def _initArchitecture(self, raw_data):
+    def _initArchitecture(self, raw_data, batch_size):
         self._logger.debug("pinkySpeaker.lib.model.TfTransformer._initArchitecture()")
 
-        self._initDataset(raw_data)
+        self._initDataset(raw_data, batch_size)
         # vocab_size, max_title_length, all_titles_length, inp_sentences = self._initNNModel(raw_data)
 
         return
@@ -86,19 +86,21 @@ class TfTransformer:
 
     ## Booting function of dataset creation.
     ## Assigns the dataset  to self._dataset
-    def _initDataset(self, raw_data):
+    def _initDataset(self, raw_data, batch_size):
         self._logger.debug("pinkySpeaker.lib.model.TfTransformer._initDataset()")
 
         ## 1. convert raw_data to tf.Dataset
         ##      
+        ## 2. Setup tokenizer to catch vocabulary
+
         intermediate_set = self._raw2TfString(raw_data)
 
         if not self._model:
             self._model = {'tokenizer': None}
         self._model['tokenizer'] = self._initTokenizer(intermediate_set)
+        self._dataset = self._preprocessDataset(intermediate_set, batch_size)
 
         exit()
-        ## 2. Setup tokenizer to catch vocabulary
         ## 3. Preprocess and encode dataset
         ## 4. Run sanity check for tokenizer
         ## 5. Fix positional encoding.
