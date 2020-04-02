@@ -140,7 +140,7 @@ class TfTransformer:
     ## Receive tf.Dataset as input
     ## Initialize tokenizer, construct vocabulary, return tokenizer
     ## Input Dataset is considered to be the return type of _raw2TfString
-    def _initTokenizer(self, str_dataset, target_vocab_size = 2**15):
+    def _initTokenizer(self, str_dataset, target_vocab_size = 2**13):
         self._logger.debug("pinkySpeaker.lib.model.TfTransformer._initTokenizer()")
 
         tokenizer = tfds.features.text.SubwordTextEncoder.build_from_corpus(
