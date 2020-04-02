@@ -55,23 +55,18 @@ def scaled_dot_product_attention(q, k, v, mask):
     Returns:
         output, attention_weights
     """
-
     matmul_qk = tf.matmul(q, k, transpose_b=True)    # (..., seq_len_q, seq_len_k)
-    
     # scale matmul_qk
     dk = tf.cast(tf.shape(k)[-1], tf.float32)
     scaled_attention_logits = matmul_qk / tf.math.sqrt(dk)
-
     # add the mask to the scaled tensor.
     if mask is not None:
         scaled_attention_logits += (mask * -1e9)    
-
     # softmax is normalized on the last axis (seq_len_k) so that the scores
     # add up to 1.
     attention_weights = tf.nn.softmax(scaled_attention_logits, axis=-1)    # (..., seq_len_q, seq_len_k)
 
     output = tf.matmul(attention_weights, v)    # (..., seq_len_q, depth_v)
-
     return output, attention_weights
 
 def print_out(q, k, v):
@@ -81,7 +76,7 @@ def print_out(q, k, v):
     l.getLogger().info(temp_attn)
     l.getLogger().info('Output is:')
     l.getLogger().info(temp_out)
-
+    return
 
 def point_wise_feed_forward_network(d_model, dff):
     return tf.keras.Sequential([
@@ -89,27 +84,19 @@ def point_wise_feed_forward_network(d_model, dff):
             tf.keras.layers.Dense(d_model)    # (batch_size, seq_len, d_model)
     ])
 
-
-
-
-
 def loss_function(real, pred, loss_object):
     mask = tf.math.logical_not(tf.math.equal(real, 0))
     loss_ = loss_object(real, pred)
-
     mask = tf.cast(mask, dtype=loss_.dtype)
     loss_ *= mask
-    
     return tf.reduce_mean(loss_)
 
 def create_masks(inp, tar):
     # Encoder padding mask
     enc_padding_mask = create_padding_mask(inp)
-    
     # Used in the 2nd attention block in the decoder.
     # This padding mask is used to mask the encoder outputs.
     dec_padding_mask = create_padding_mask(inp)
-    
     # Used in the 1st attention block in the decoder.
     # It is used to pad and mask future tokens in the input received by 
     # the decoder.
@@ -143,7 +130,6 @@ def evaluate(inp_sentence, transformer):
                                                      enc_padding_mask,
                                                      combined_mask,
                                                      dec_padding_mask)
-        
         # select the last word from the seq_len dimension
         predictions = predictions[: ,-1:, :]    # (batch_size, 1, vocab_size)
 
@@ -168,17 +154,12 @@ def plot_attention_weights(attention, sentence, result, layer):
     
     for head in range(attention.shape[0]):
         ax = fig.add_subplot(2, 4, head+1)
-        
         # plot the attention weights
         ax.matshow(attention[head][:-1, :], cmap='viridis')
-
         fontdict = {'fontsize': 10}
-        
         ax.set_xticks(range(len(sentence)+2))
         ax.set_yticks(range(len(result)))
-        
         ax.set_ylim(len(result)-1.5, -0.5)
-                
         ax.set_xticklabels(
                 ['<start>']+[tokenizer.decode([i]) for i in sentence]+['<end>'], 
                 fontdict=fontdict, rotation=90)
@@ -195,7 +176,6 @@ def plot_attention_weights(attention, sentence, result, layer):
 
 def translate(sentence, transformer, plot=''):
     result, attention_weights = evaluate(sentence, transformer)
-    
     predicted_sentence = tokenizer.decode([i for i in result if i < tokenizer.vocab_size])    
 
     if plot:
