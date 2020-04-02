@@ -102,7 +102,7 @@ class TfTransformer:
     def _setupOptimizer(self, d_model, adam_params = {'beta_1': 0.9, 'beta_2': 0.98, 'epsilon': 1e-9}):
         self._logger.debug("pinkySpeaker.lib.model.TfTransformer._setupOptimizer()")
 
-        learning_rate = CustomSchedule(d_model)
+        learning_rate = _CustomSchedule(d_model)
         optimizer = tf.keras.optimizers.Adam(learning_rate,
                                             beta_1 = adam_params['beta_1'],
                                             beta_2 = adam_params['beta_2'],
