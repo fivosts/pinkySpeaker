@@ -80,6 +80,7 @@ def runTransformer(target = "greeklish", datapath = "../dataset/pink_floyd", dum
     ## Also, pair is converted to tf tensors.
     for file in os.listdir(path):
         line = tf.data.TextLineDataset(pt.join(path, file))
+        line = line.filter(lambda key: key != "")
         if target == "greeklish":
             tf_lines = line.map(lambda inp : labeller(inp, sample_greeklish()))
         else:
@@ -115,15 +116,7 @@ def runTransformer(target = "greeklish", datapath = "../dataset/pink_floyd", dum
     tf_dataset = src_dataset[0]
     for d in src_dataset[1:]:
         tf_dataset = tf_dataset.concatenate(d)
-    print(tf_dataset)
-    print(type(tf_dataset))
-    for i in tf_dataset:
-        print(i)
-        print(type(i))
-        for j in i:
-            print(j)
-            print(type(j))
-        break
+
 
 
     train_preprocessed = (
@@ -138,7 +131,20 @@ def runTransformer(target = "greeklish", datapath = "../dataset/pink_floyd", dum
                                      .padded_batch(BATCH_SIZE, padded_shapes=([None], [None]))
                                      .prefetch(tf.data.experimental.AUTOTUNE))
 
+    print(train_dataset)
+    print(type(train_dataset))
+    for tupl in train_dataset:
+        print(tupl)
+        print(type(tupl))
+        for item in tupl:
+            print(item)
+            for element in item:
+                print(tokenizer.decode([x for x in element if x < 4384]))
 
+            # print([tokenizer.decode([x for x in l if x < 4384]) for l in item for x in l])
+            print(type(item))
+        break
+    exit()
     ## Just skip validation examples for now
     train_dataset = src_dataset
 
