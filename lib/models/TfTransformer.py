@@ -755,7 +755,7 @@ class _Encoder(tf.keras.layers.Layer):
 class _Decoder(tf.keras.layers.Layer):
     def __init__(self, num_layers, d_model, num_heads, dff, target_vocab_size,
                              maximum_position_encoding, rate=0.1):
-        super(Decoder, self).__init__()
+        super(_Decoder, self).__init__()
 
         self.d_model = d_model
         self.num_layers = num_layers
