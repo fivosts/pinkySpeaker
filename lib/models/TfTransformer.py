@@ -191,18 +191,17 @@ class TfTransformer:
         res_inp, res_tar = tf.py_function(encode, [inp, tar], [tf.int64, tf.int64])
         res_inp.set_shape([None])
         res_tar.set_shape([None])
-
         return res_inp, res_tar
 
     ## Nested encoding function
     def encode(inp, tar):
-        inp = [self._model['tokenizer'].vocab_size] + self._model['tokenizer'].encode(
-                inp.numpy()) + [self._model['tokenizer'].vocab_size+1]
-
+        inp = [self._model['tokenizer'].vocab_size]
+              + self._model['tokenizer'].encode(inp.numpy()) 
+              + [self._model['tokenizer'].vocab_size+1]
         ## Target will not have the start token.
         ## We want output to be shifted one position to the right wrt the input
-        tar = self._model['tokenizer'].encode(
-                tar.numpy()) + [self._model['tokenizer'].vocab_size+1]
+        tar = self._model['tokenizer'].encode(tar.numpy())
+              + [self._model['tokenizer'].vocab_size+1]
         return inp, tar
 
     ## Initialize and return word model
