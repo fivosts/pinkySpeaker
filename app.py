@@ -27,7 +27,7 @@ def configArgs():
 
 	p = arg.ArgumentParser(description = "Song generator machine learning models")
 	p.add_argument('-md', '--model', 
-					choices = ["simpleRNN", "Transformer"], required = True,
+					choices = [x for x in MODEL_ZOO], required = True,
 					help = "Choose model architecture for the sequence generation")
 	p.add_argument('-m', '--mode', default = "gen", 
 					choices = ["train", "gen"], required = False, 
