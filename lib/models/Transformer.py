@@ -157,6 +157,9 @@ class Transformer:
         clw[self.word2idx(self._startToken)] = 0
         return clw
 
+    ## Precompute raw data information to construct word model
+    ## Returns a list of chunks of sentences, the max length of titles
+    ## and the total length of titles
     def _constructSentences(self, raw_data):
         self._logger.debug("pinkySpeaker.lib.model.Transformer._constructSentences()")
         self._logger.info("Sentence preprocessing for word model")
@@ -179,6 +182,7 @@ class Transformer:
                     words.append(word)
         return self._listToChunksList(words, sentence_size), max_title_length, all_titles_length
 
+    ## Converts a sentence-list of words-list to a list of chunks of sentences
     def _listToChunksList(self, lst, n):
         self._logger.debug("pinkySpeaker.lib.model.Transformer._listToChunksList()")
         chunk_list = []
