@@ -48,10 +48,9 @@ class TfTransformer:
     ## Booting function of NN Model + dataset initialization
     def _initArchitecture(self, raw_data, batch_size):
         self._logger.debug("pinkySpeaker.lib.model.TfTransformer._initArchitecture()")
-
         self._initDataset(raw_data, batch_size)
-        vocab_size, max_title_length, all_titles_length, inp_sentences = self._initNNModel(raw_data)
-
+        self._initNNModel(raw_data)
+        self._logger.info("Transformer architecture initialized")
         return
 
     ## Booting function of NN Model initialization
