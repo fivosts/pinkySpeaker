@@ -845,4 +845,4 @@ def translate(sentence, transformer, plot=''):
         plot_attention_weights(attention_weights, sentence, result, plot)
     return predicted_sentence
 
-runTransformer()
+runTransformer(target = "lyrics")
