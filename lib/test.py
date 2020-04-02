@@ -58,19 +58,11 @@ def runTransformer(target = "greeklish", datapath = "../dataset/pink_floyd", dum
         return random_target_list[randint(0, len(random_target_list) - 1)]
 
 
-    def labeller(inp, tar):
-        # inp = [
-        #         [tokenizer.vocab_size]
-        #         + tokenizer.encode(inp)
-        #         + [tokenizer.vocab_size + 1]
-        # ]
-
-        # tar = [
-        #         [tokenizer.vocab_size]
-        #         + tokenizer.encode(tar)
-        #         + [tokenizer.vocab_size + 1]
-        # ]
-        return inp, tar
+    def labeller(inp, tar_flag):
+        if tar_flag == "greeklish":
+            return inp, sample_greeklish()
+        else:
+            return inp, inp
 
     ## Now, once again files are iterated and lines are converted to tf-dataset
     ## for each non-empty line
@@ -81,10 +73,12 @@ def runTransformer(target = "greeklish", datapath = "../dataset/pink_floyd", dum
     for file in os.listdir(path):
         line = tf.data.TextLineDataset(pt.join(path, file))
         line = line.filter(lambda key: key != "")
-        if target == "greeklish":
-            tf_lines = line.map(lambda inp : labeller(inp, sample_greeklish()))
-        else:
-            tf_lines = line.map(lambda inp : labeller(inp, inp))
+
+        tf_lines = line.map(lambda inp : labeller(inp, target))
+        # if target == "greeklish":
+        #     tf_lines = line.map(lambda inp : labeller(inp, sample_greeklish()))
+        # else:
+        #     tf_lines = line.map(lambda inp : labeller(inp, inp))
         src_dataset.append(tf_lines)
         # for l in line:
         #     if l.numpy().decode("utf-8")  != "":
@@ -146,7 +140,7 @@ def runTransformer(target = "greeklish", datapath = "../dataset/pink_floyd", dum
     #     break
     # exit()
     ## Just skip validation examples for now
-    train_dataset = src_dataset
+    # train_dataset = src_dataset
 
 
     ## Sanity check of tokenizer
@@ -359,12 +353,18 @@ def runTransformer(target = "greeklish", datapath = "../dataset/pink_floyd", dum
             train_accuracy.reset_states()
             
             # inp -> portuguese, tar -> english
-            for (batch, (inp, tar)) in enumerate(train_dataset):
+            for i in train_dataset:
+                print(i)
+                print(type(i))
+                for j in i:
+                    print(j)
+                exit(0)
+            for (batch, pair) in enumerate(train_dataset):
 
                 ## 
                 # new_inp = tf.convert_to_tensor([[x for x in inp]], dtype = tf.int64)
                 # new_tar = tf.convert_to_tensor([[x for x in tar]], dtype = tf.int64)
-
+                inp, tar = pair
                 train_step(inp, tar)
                 
                 if batch % 50 == 0:
