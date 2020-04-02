@@ -619,7 +619,7 @@ class _EncoderLayer(tf.keras.layers.Layer):
         super(_EncoderLayer, self).__init__()
 
         self.mha = _MultiHeadAttention(d_model, num_heads)
-        self.ffn = utils.point_wise_feed_forward_network(d_model, dff)
+        self.ffn = utils().point_wise_feed_forward_network(d_model, dff)
 
         self.layernorm1 = tf.keras.layers.LayerNormalization(epsilon=1e-6)
         self.layernorm2 = tf.keras.layers.LayerNormalization(epsilon=1e-6)
@@ -647,7 +647,7 @@ class _DecoderLayer(tf.keras.layers.Layer):
         self.mha1 = _MultiHeadAttention(d_model, num_heads)
         self.mha2 = _MultiHeadAttention(d_model, num_heads)
 
-        self.ffn = utils.point_wise_feed_forward_network(d_model, dff)
+        self.ffn = utils().point_wise_feed_forward_network(d_model, dff)
  
         self.layernorm1 = tf.keras.layers.LayerNormalization(epsilon=1e-6)
         self.layernorm2 = tf.keras.layers.LayerNormalization(epsilon=1e-6)
@@ -686,7 +686,7 @@ class _Encoder(tf.keras.layers.Layer):
         self.num_layers = num_layers
         
         self.embedding = tf.keras.layers.Embedding(input_vocab_size, d_model)
-        self.pos_encoding = utils.positional_encoding(maximum_position_encoding, self.d_model)
+        self.pos_encoding = utils().positional_encoding(maximum_position_encoding, d_model)
         
         
         self.enc_layers = [_EncoderLayer(d_model, num_heads, dff, rate) 
@@ -719,7 +719,7 @@ class _Decoder(tf.keras.layers.Layer):
         self.num_layers = num_layers
         
         self.embedding = tf.keras.layers.Embedding(target_vocab_size, d_model)
-        self.pos_encoding = utils.positional_encoding(maximum_position_encoding, d_model)
+        self.pos_encoding = utils().positional_encoding(maximum_position_encoding, d_model)
         
         self.dec_layers = [_DecoderLayer(d_model, num_heads, dff, rate) 
                                              for _ in range(num_layers)]
@@ -790,7 +790,7 @@ class _CustomSchedule(tf.keras.optimizers.schedules.LearningRateSchedule):
         return tf.math.rsqrt(self.d_model) * tf.math.minimum(arg1, arg2)
 
 class utils:
-    def __init__():
+    def __init__(self):
         return
 
     def filter_max_length(self, x, y, max_length=40):
