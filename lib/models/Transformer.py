@@ -268,7 +268,7 @@ class Transformer:
         song_sample_weight = [[     0 if x == self._padToken
                                else 0 if x == self._startToken
                                else 50 if x == "endfile" 
-                               else 10 if x == "endline" 
+                               else 10 if x == "<ENDLINE>" 
                                else 1 for x in inp] 
                             for inp in encoder_input]
 
@@ -279,7 +279,7 @@ class Transformer:
         clw = {}
         for i in range(vocab_size):
             clw[i] = 1
-        clw[self.word2idx("endline")] = 50
+        clw[self.word2idx("<ENDLINE>")] = 50
         return clw
 
     ## Receive a word, return the index in the vocabulary
@@ -297,7 +297,7 @@ class Transformer:
         ret[idx] = 1000
         return ret
 
-    ## Converts "endline" to '\n' for pretty printing
+    ## Converts "<ENDLINE>" to '\n' for pretty printing
     ## Also masks meta-tokens but throws a warning
     def _prettyPrint(self, text):
         self._logger.debug("pinkySpeaker.lib.model.Transformer._prettyPrint()")
@@ -306,10 +306,10 @@ class Transformer:
             self._logger.warning("</START> has been found to generated text!")
         if self._padToken in text:
             self._logger.warning("</PAD> has been found to generated text!")
-        if "endline" in text:
+        if "<ENDLINE>" in text:
             self._logger.warning("Endline found in text!")
 
-        return text.replace("endline ", "\n").replace("endfile", "\nEND")
+        return text.replace("<ENDLINE> ", "\n").replace("endfile", "\nEND")
 
     ## Just fit it!
     def fit(self, epochs = 50, save_model = None):
@@ -460,7 +460,7 @@ class Transformer:
         #     idx = self._sample(samples, temperature=0.7)
         #     word_idxs.append(idx)
 
-        #     if self.idx2word(idx) == "endfile" or (title and self.idx2word(idx) == "endline"):
+        #     if self.idx2word(idx) == "endfile" or (title and self.idx2word(idx) == "<ENDLINE>"):
         #         break
 
         return ' '.join(self.idx2word(idx) for idx in word_idxs + prediction)
