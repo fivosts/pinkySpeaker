@@ -40,7 +40,7 @@ class TfTransformer:
             self._initArchitecture(data)
         elif model:
             self._model = self._loadNNModel(model)
-        self._logger.info("Transformer model")
+        self._logger.info("Pure-Tensorflow Transformer model")
         return
 
     def _initArchitecture(self, raw_data):
