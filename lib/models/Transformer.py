@@ -45,6 +45,7 @@ class Transformer:
         self._logger.info("Transformer model")
         return
 
+    ## Booting function of NN Model + dataset initialization
     def _initArchitecture(self, raw_data):
         self._logger.debug("pinkySpeaker.lib.model.Transformer._initArchitecture()")
 
@@ -53,6 +54,7 @@ class Transformer:
 
         return
 
+    ## Booting function of NN Model initialization
     def _initNNModel(self, raw_data):
         self._logger.debug("pinkySpeaker.lib.model.Transformer._initNNModel()")
         self._logger.info("Initialize NN Model")
@@ -74,12 +76,15 @@ class Transformer:
         self._logger.info("Transformer Compiled successfully")
         return vocab_size, max_title_length, all_titles_length, inp_sent
 
+    ## Loads a model from file.
     def _loadNNModel(self, modelpath):
 
         return { 'word_model'   :   gensim.models.Word2Vec.load(pt.join(modelpath, "word_model.h5")),
                  'lyric_model'  :   load_model(pt.join(modelpath, "lyric_model.h5"))
                }
 
+    ## Booting function of dataset creation.
+    ## Assigns the dataset  to self._dataset
     def _initDataset(self, raw_data, vocab_size, mx_t_l, all_t_l, inp_sent):
         self._logger.debug("pinkySpeaker.lib.model.Transformer._initDataset()")
 
@@ -95,6 +100,7 @@ class Transformer:
         self._logger.info("Dataset constructed successfully")
         return   
 
+    ## Initialize and return word model
     def _initWordModel(self, inp_sentences):
         self._logger.debug("pinkySpeaker.lib.model.Transformer._initWordModel()")
         inp_sentences.append([self._padToken]) # Token that ensembles masking of training weights. Used to pad sequence length
@@ -103,6 +109,8 @@ class Transformer:
         self._logger.info("Word2Vec word model initialized")
         return wm
 
+    ## Function to initialize and return title model
+    ## Needs to be fixed
     def _initTitleModel(self, weights, LSTM_Depth):
         self._logger.debug("pinkySpeaker.lib.model.Transformer._initTitleModel()")
 
@@ -123,6 +131,7 @@ class Transformer:
         self._logger.info(tm.summary())
         return tm
 
+    ## Function to initialize and return lyric model
     def _initLyricModel(self, weights):
         self._logger.debug("pinkySpeaker.lib.model.Transformer._initLyricModel()")
 
@@ -148,6 +157,7 @@ class Transformer:
         self._logger.info(lm.summary())
         return lm
 
+    ## Set class weights for pad token and start token to 0.
     def _setClassWeight(self, vocab_size):
         self._logger.debug("pinkySpeaker.lib.model.Transformer._setClassWeight()")
         clw = {}
