@@ -78,9 +78,7 @@ class TfTransformer:
                                                             target_vocab_size, 
                                                             dropout_rate
                                                             )
-        self._model['optimizer'] = self._setupOptimizer(d_model,
-                                                        adam_params
-                                                        )
+        self._model['optimizer'] = self._setupOptimizer(d_model)
 
         self._logger.info("TfTransformer Assembled successfully")
         return
