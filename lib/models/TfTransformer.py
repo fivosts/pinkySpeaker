@@ -92,7 +92,11 @@ class TfTransformer:
         ## 1. convert raw_data to tf.Dataset
         ##      
         intermediate_set = self._raw2TfString(raw_data)
+
+        if not self._model:
+            self._model = {'tokenizer': None}
         self._model['tokenizer'] = self._initTokenizer(intermediate_set)
+
         exit()
         ## 2. Setup tokenizer to catch vocabulary
         ## 3. Preprocess and encode dataset
@@ -127,11 +131,11 @@ class TfTransformer:
         for en, song in enumerate(raw_data):
             datapoint = tf.data.Dataset.from_tensor_slices([self._songList2songStr(song)])
             datapoint = datapoint.map(lambda key: (key, key))
-            if en == 0:
+            if not en:
                 str_dataset = datapoint
             else:
                 str_dataset.concatenate(datapoint)
-        return
+        return str_dataset
 
     ## Receive tf.Dataset as input
     ## Initialize tokenizer, construct vocabulary, return tokenizer
@@ -155,7 +159,7 @@ class TfTransformer:
         self._logger.info('Tokenized string is {}'.format(tokenized_string))
         self._logger.info('The original string: {}'.format(original_string))
 
-        assert original_string == sample_strinng
+        assert original_string == sample_string
         return
 
     ## Initialize and return word model
