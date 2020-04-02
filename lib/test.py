@@ -126,6 +126,18 @@ def runTransformer(target = "greeklish", datapath = "../dataset/pink_floyd", dum
         break
 
 
+    train_preprocessed = (
+            tf_dataset
+            .map(tf_encode) 
+            .filter(filter_max_length)
+            # cache the dataset to memory to get a speedup while reading from it.
+            .cache()
+            .shuffle(BUFFER_SIZE))
+
+    train_dataset = (train_preprocessed
+                                     .padded_batch(BATCH_SIZE, padded_shapes=([None], [None]))
+                                     .prefetch(tf.data.experimental.AUTOTUNE))
+
 
     ## Just skip validation examples for now
     train_dataset = src_dataset
