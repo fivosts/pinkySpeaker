@@ -50,7 +50,7 @@ class TfTransformer:
     def _initArchitecture(self, raw_data):
         self._logger.debug("pinkySpeaker.lib.model.TfTransformer._initArchitecture()")
 
-        self._initDataset(raw_data, vocab_size, max_title_length, all_titles_length, inp_sentences)
+        self._initDataset(raw_data)
         # vocab_size, max_title_length, all_titles_length, inp_sentences = self._initNNModel(raw_data)
 
         return
@@ -86,7 +86,7 @@ class TfTransformer:
 
     ## Booting function of dataset creation.
     ## Assigns the dataset  to self._dataset
-    def _initDataset(self, raw_data, vocab_size, mx_t_l, all_t_l, inp_sent):
+    def _initDataset(self, raw_data):
         self._logger.debug("pinkySpeaker.lib.model.TfTransformer._initDataset()")
 
         ## 1. convert raw_data to tf.Dataset
@@ -99,23 +99,37 @@ class TfTransformer:
         ## 5. Fix positional encoding.
         ##      Optionally fix mesh plot
 
-        lyric_set = self._constructTLSet(raw_data, vocab_size, mx_t_l, all_t_l)
+        # lyric_set = self._constructTLSet(raw_data, vocab_size, mx_t_l, all_t_l)
 
-        if len(lyric_set['encoder_input']) != len(lyric_set['output']) or len(lyric_set['decoder_input']) != len(lyric_set['output']):
-            raise ValueError("Wrong lyric set dimensions!")
+        # if len(lyric_set['encoder_input']) != len(lyric_set['output']) or len(lyric_set['decoder_input']) != len(lyric_set['output']):
+        #     raise ValueError("Wrong lyric set dimensions!")
 
-        self._dataset = { 'word_model'      : inp_sent,
-                          'lyric_model'     : lyric_set 
-                     }
+        # self._dataset = { 'word_model'      : inp_sent,
+        #                   'lyric_model'     : lyric_set 
+        #              }
 
-        self._logger.info("Dataset constructed successfully")
-        return   
+        # self._logger.info("Dataset constructed successfully")
+        return
+
+    ## Converts song from a dict-list format to single string
+    def _songList2songStr(self, song, delim = " "):
+        return delim.join([delim.join(line) for line in [song['title']] + song['lyrics']])
 
     ## Convert raw_data in list format to tf.Dataset format of strings
     ## Arrange inputs with targets
     def _raw2TfString(self, raw_data):
+        self._logger.debug("pinkySpeaker.lib.model.TfTransformer._raw2TfString()")
 
-
+        ## str_dataset will be a MapDataset.
+        ## Each of its entries will be a pair tuple in an input->target relationship
+        ## Each element of the tuple is a string tensor.
+        for en, song in enumerate(raw_data):
+            datapoint = tf.data.Dataset.from_tensor_slices([self._songList2songStr(song)])
+            datapoint = datapoint.map(lambda key: (key, key))
+            if en == 0:
+                str_dataset = datapoint
+            else:
+                str_dataset.concatenate(datapoint)
         return
 
     ## Initialize and return word model
