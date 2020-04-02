@@ -22,8 +22,6 @@ import tensorflow_datasets as tfds
 
 class TfTransformer:
 
-    _logger = None
-
     def __init__(self, data = None, model = None, batch_size = 4, LSTM_Depth = 3, sequence_length = 30):
         self._logger = l.getLogger()
         self._logger.debug("pinkySpeaker.lib.model.TfTransformer.__init__()")
@@ -148,7 +146,7 @@ class TfTransformer:
         self._logger.info('The original string: {}'.format(original_string))
 
         for ts in tokenized_string:
-            self._logger.info('{} ----> {}'.format(ts, tokenizer.decode([ts])))
+            self._logger.info('{}\t---->\t{}'.format(ts, tokenizer.decode([ts])))
 
         assert original_string == sample_string
         return
