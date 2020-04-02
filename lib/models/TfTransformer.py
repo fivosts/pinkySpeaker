@@ -132,7 +132,7 @@ class TfTransformer:
         tokenizer = tfds.features.text.SubwordTextEncoder.build_from_corpus(
                     (x.numpy() for x, _ in str_dataset),
                     target_vocab_size = target_vocab_size,
-                    reserved_tokens = ["<ENDLINE>", "endfile"]
+                    reserved_tokens = ["<ENDLINE>"]
         )
         self._tokSanityCheck(tokenizer, "This is a comfortably numb tokenizer ?!")
         return tokenizer
@@ -144,7 +144,6 @@ class TfTransformer:
 
         tokenized_string = tokenizer.encode(sample_string)
         original_string = tokenizer.decode(tokenized_string)
-        tokenizer.get_logger().setLevel('WARNING')
         self._logger.info('Tokenized string is {}'.format(tokenized_string))
         self._logger.info('The original string: {}'.format(original_string))
 
