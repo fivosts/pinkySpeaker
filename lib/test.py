@@ -10,7 +10,7 @@ from random import shuffle
 from os import path as pt
 
 BUFFER_SIZE = 2000
-BATCH_SIZE = 64
+BATCH_SIZE = 16
 MAX_LENGTH = 40
 
 tokenizer = None
