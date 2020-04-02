@@ -169,11 +169,13 @@ class TfTransformer:
         assert original_string == sample_string
         return
 
+    ## Take tf.Dataset in string format, encodes it and returns
+    ## Returned set should be batched, shuffled, cached and ready to be fed to the Transformer
     def _preprocessDataset(self, str_dataset, batch_size, buffer_size = 20000):
 
         preprocessed_dataset = (
                     str_dataset
-                    .map(tf_encode)
+                    .map(pair_encode)
                     .cache()
                     .shuffle(buffer_size)  
         )
@@ -183,6 +185,25 @@ class TfTransformer:
                     .prefetch(tf.data.experimental.AUTOTUNE)
         )
         return dataset
+
+    ## Boot function of (input, target) encoding
+    def pair_encode(inp, tar):
+        res_inp, res_tar = tf.py_function(encode, [inp, tar], [tf.int64, tf.int64])
+        res_inp.set_shape([None])
+        res_tar.set_shape([None])
+
+        return res_inp, res_tar
+
+    ## Nested encoding function
+    def encode(inp, tar):
+        inp = [self._model['tokenizer'].vocab_size] + self._model['tokenizer'].encode(
+                inp.numpy()) + [self._model['tokenizer'].vocab_size+1]
+
+        ## Target will not have the start token.
+        ## We want output to be shifted one position to the right wrt the input
+        tar = self._model['tokenizer'].encode(
+                tar.numpy()) + [self._model['tokenizer'].vocab_size+1]
+        return inp, tar
 
     ## Initialize and return word model
     def _initWordModel(self, inp_sentences):
