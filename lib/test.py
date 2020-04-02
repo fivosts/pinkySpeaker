@@ -115,8 +115,9 @@ def runTransformer(target = "greeklish", datapath = "../dataset/pink_floyd", dum
             .map(tf_encode) 
             # .filter(filter_max_length)
             # cache the dataset to memory to get a speedup while reading from it.
-            # .cache()
-            .shuffle(BUFFER_SIZE))
+            .cache()
+            .shuffle(BUFFER_SIZE)
+            )
 
     train_dataset = (train_preprocessed
                                      .padded_batch(BATCH_SIZE, padded_shapes=([None], [None]))
@@ -140,7 +141,6 @@ def runTransformer(target = "greeklish", datapath = "../dataset/pink_floyd", dum
     #     break
     # exit()
     ## Just skip validation examples for now
-    # train_dataset = src_dataset
 
 
     ## Sanity check of tokenizer
@@ -352,19 +352,11 @@ def runTransformer(target = "greeklish", datapath = "../dataset/pink_floyd", dum
             train_loss.reset_states()
             train_accuracy.reset_states()
             
-            # inp -> portuguese, tar -> english
-            for i in train_dataset:
-                print(i)
-                print(type(i))
-                for j in i:
-                    print(j)
-                exit(0)
-            for (batch, pair) in enumerate(train_dataset):
+            for (batch, (inp, tar)) in enumerate(train_dataset):
 
                 ## 
                 # new_inp = tf.convert_to_tensor([[x for x in inp]], dtype = tf.int64)
                 # new_tar = tf.convert_to_tensor([[x for x in tar]], dtype = tf.int64)
-                inp, tar = pair
                 train_step(inp, tar)
                 
                 if batch % 50 == 0:
@@ -387,22 +379,20 @@ def runTransformer(target = "greeklish", datapath = "../dataset/pink_floyd", dum
 
     ## Run 20 times and see how it works....
 
-    for i in range(20):
-        line_index = randint(0, len(src_dataset) - 1)
-        seed_sentence, real_sentence = src_dataset[7*i]
-        seed_sentence = tokenizer.decode(seed_sentence.numpy()[0][1:-1]) ## Convert tf-tensors back to string
-        real_sentence = tokenizer.decode(real_sentence.numpy()[0][1:-1]) ## Convert tf-tensors back to string
-        predicted_sentence = translate(seed_sentence, transformer) ## START and END token
-        print("Seed sentence: {}\nReal target: {}\nModel prediction: {}\n".format(seed_sentence, real_sentence, predicted_sentence))
+    for seed, target in train_preprocessed:
+
+        seed_txt = tokenizer.decode([x for x in seed if x < tokenizer.vocab_size])
+        tar_txt = tokenizer.decode([x for x in target if x < tokenizer.vocab_size])
+        predicted = translate(seed_txt, transformer)
+        print("Seed: {}\nTarget: {}\nPrediction: {}\n".format(seed_txt, tar_txt, predicted))
+
+    seed, target = next(iter(train_preprocessed))
+    seed_txt = tokenizer.decode([x for x in seed if x < tokenizer.vocab_size])
+    tar_txt = tokenizer.decode([x for x in target if x < tokenizer.vocab_size])
+    predicted = translate(seed, transformer, plot = "decoder_layer4_block2")
+    print("Seed: {}\nTarget: {}\nPrediction: {}\n".format(seed_txt, tar_txt, predicted))
 
 
-    final_line = randint(0, len(src_dataset) - 1)
-    seed_sentence, real_sentence = src_dataset[final_line]
-    seed_sentence = tokenizer.decode(seed_sentence.numpy()[0][1:-1])
-    real_sentence = tokenizer.decode(real_sentence.numpy()[0][1:-1])
-    predicted_sentence = translate(seed_sentence, transformer, plot="decoder_layer4_block2") ## START and END token
-    print("Seed sentence: {}\nReal target: {}\nModel prediction: {}".format(seed_sentence, real_sentence, predicted_sentence))
-    exit(1)
 
     # translate("este é o primeiro livro que eu fiz.", plot='decoder_layer4_block2')
     # print ("Real translation: this is the first book i've ever done.")
