@@ -49,7 +49,7 @@ class TfTransformer:
         self._logger.debug("pinkySpeaker.lib.model.TfTransformer._initArchitecture()")
 
         self._initDataset(raw_data, batch_size)
-        # vocab_size, max_title_length, all_titles_length, inp_sentences = self._initNNModel(raw_data)
+        vocab_size, max_title_length, all_titles_length, inp_sentences = self._initNNModel(raw_data)
 
         return
 
@@ -58,26 +58,49 @@ class TfTransformer:
         self._logger.debug("pinkySpeaker.lib.model.TfTransformer._initNNModel()")
         self._logger.info("Initialize NN Model")
 
-        inp_sent, max_title_length, all_titles_length = self._constructSentences(raw_data)
-        word_model = self._initWordModel(inp_sent)
-        pretrained_weights = word_model.wv.vectors
-        vocab_size, _ = pretrained_weights.shape
-        ## Any new sub-model should be registered here
-        ## The according function should be written to initialize it
-        self._model = { 'word_model'  : None,
-                        'lyric_model' : None
-                      }
+        ## Temp specs. Those will be added as parameters
+        num_layers = 2
+        d_model = 64
+        dff = 64
+        num_heads = 2
 
-        ## The order matters because of word2idx usage, therefore manual initialization here
-        self._model['word_model'] = word_model
-        self._model['TfTransformer'] = self._initLyricModel(pretrained_weights)
+        input_vocab_size = self._model['tokenizer'].vocab_size + 2
+        target_vocab_size = self._model['tokenizer'].vocab_size + 2
+        dropout_rate = 0.1
+        ##
+
+        self._model['transformer'] = self._setupTransformer(num_layers,
+                                                            d_model, 
+                                                            dff, 
+                                                            num_heads, 
+                                                            input_vocab_size, 
+                                                            target_vocab_size, 
+                                                            dropout_rate
+                                                            )
+        self._model['optimizer'] = self._setupOptimizer(d_model,
+                                                        adam_params
+                                                        )
 
         self._logger.info("TfTransformer Compiled successfully")
         return vocab_size, max_title_length, all_titles_length, inp_sent
 
+    ## Core function that assembles the transformer
+    def _setupTransformer(self, num_layers, d_model, dff, num_heads, input_vocab_size, target_vocab_size, dropout_rate):
+        self._logger.debug("pinkySpeaker.lib.model.TfTransformer._setupTransformer()")
+        ## TODO
+        return
+
+    ## Core function that assembles the optimizer and training schedule
+    def _setupOptimizer(self, d_model, adam_params = {'beta_1': 0.9, 'beta_2': 0.98, 'epsilon': 1e-9}):
+        self._logger.debug("pinkySpeaker.lib.model.TfTransformer._setupOptimizer()")
+        ## TODO
+        return
+
+
     ## Loads a model from file.
     def _loadNNModel(self, modelpath):
-
+        self._logger.debug("pinkySpeaker.lib.model.TfTransformer._loadNNModel()")
+        ## TODO
         return { 'word_model'   :   gensim.models.Word2Vec.load(pt.join(modelpath, "word_model.h5")),
                  'lyric_model'  :   load_model(pt.join(modelpath, "lyric_model.h5"))
                }
