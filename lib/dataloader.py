@@ -65,7 +65,7 @@ def prunedSentences(sentence):
             .lower()\
             .replace("i'm", "i am").replace("it's", "it is")\
             .replace("isn't", "is not").replace("there's", "there is")\
-            .replace("they've", "they have").replace("\n", " endline")\
+            .replace("they've", "they have").replace("\n", " <ENDLINE>")\
             .replace("we've", "we have").replace("wasn't", "was not")\
             .replace(".", " . ").replace(",", " , ")\
             .replace("-", "").replace("\"", "")\
