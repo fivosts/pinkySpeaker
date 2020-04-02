@@ -19,7 +19,6 @@ from keras_transformer import get_model, decode
 
 import tensorflow as tf
 import tensorflow_datasets as tfds
-from lib import utils
 
 class TfTransformer:
 
