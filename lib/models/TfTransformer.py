@@ -89,33 +89,17 @@ class TfTransformer:
     def _initDataset(self, raw_data, batch_size):
         self._logger.debug("pinkySpeaker.lib.model.TfTransformer._initDataset()")
 
-        ## 1. convert raw_data to tf.Dataset
-        ##      
-        ## 2. Setup tokenizer to catch vocabulary
+        ##  TODO  Encoder class will do that 5. Fix positional encoding.
+        ##      And that too: Optionally fix mesh plot
 
         intermediate_set = self._raw2TfString(raw_data)
-
+        self._logger.info("String dataset constructed")
         if not self._model:
             self._model = {'tokenizer': None}
         self._model['tokenizer'] = self._initTokenizer(intermediate_set)
         self._dataset = self._preprocessDataset(intermediate_set, batch_size)
 
-        exit()
-        ## 3. Preprocess and encode dataset
-        ## 4. Run sanity check for tokenizer
-        ## 5. Fix positional encoding.
-        ##      Optionally fix mesh plot
-
-        # lyric_set = self._constructTLSet(raw_data, vocab_size, mx_t_l, all_t_l)
-
-        # if len(lyric_set['encoder_input']) != len(lyric_set['output']) or len(lyric_set['decoder_input']) != len(lyric_set['output']):
-        #     raise ValueError("Wrong lyric set dimensions!")
-
-        # self._dataset = { 'word_model'      : inp_sent,
-        #                   'lyric_model'     : lyric_set 
-        #              }
-
-        # self._logger.info("Dataset constructed successfully")
+        self._logger.info("Dataset has been encoded successfully")
         return
 
     ## Converts song from a dict-list format to single string
