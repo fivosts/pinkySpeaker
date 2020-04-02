@@ -81,13 +81,13 @@ class TfTransformer:
                                                         adam_params
                                                         )
 
-        self._logger.info("TfTransformer Compiled successfully")
-        return vocab_size, max_title_length, all_titles_length, inp_sent
+        self._logger.info("TfTransformer Assembled successfully")
+        return
 
     ## Core function that assembles the transformer
     def _setupTransformer(self, num_layers, d_model, dff, num_heads, input_vocab_size, target_vocab_size, dropout_rate):
         self._logger.debug("pinkySpeaker.lib.model.TfTransformer._setupTransformer()")
-        return TFTransformer(num_layers, 
+        return _Transformer(num_layers, 
                             d_model, 
                             num_heads, 
                             dff,
@@ -95,7 +95,8 @@ class TfTransformer:
                             target_vocab_size, 
                             pe_input=input_vocab_size, 
                             pe_target=target_vocab_size,
-                            rate=dropout_rate)
+                            rate=dropout_rate
+                           )
 
     ## Core function that assembles the optimizer and training schedule
     def _setupOptimizer(self, d_model, adam_params = {'beta_1': 0.9, 'beta_2': 0.98, 'epsilon': 1e-9}):
@@ -606,9 +607,9 @@ class TfTransformer:
         probas = np.random.multinomial(1, preds, 1)
         return np.argmax(probas)
 
-    class MultiHeadAttention(self, tf.keras.layers.Layer):
+    class _MultiHeadAttention(tf.keras.layers.Layer):
         def __init__(self, d_model, num_heads):
-            super(MultiHeadAttention, self).__init__()
+            super(_MultiHeadAttention, self).__init__()
             self.num_heads = num_heads
             self.d_model = d_model
             
@@ -654,11 +655,11 @@ class TfTransformer:
                     
             return output, attention_weights
 
-    class EncoderLayer(self, tf.keras.layers.Layer):
+    class _EncoderLayer(tf.keras.layers.Layer):
         def __init__(self, d_model, num_heads, dff, rate=0.1):
             super(EncoderLayer, self).__init__()
 
-            self.mha = MultiHeadAttention(d_model, num_heads)
+            self.mha = _MultiHeadAttention(d_model, num_heads)
             self.ffn = point_wise_feed_forward_network(d_model, dff)
 
             self.layernorm1 = tf.keras.layers.LayerNormalization(epsilon=1e-6)
@@ -680,12 +681,12 @@ class TfTransformer:
             return out2
 
 
-    class DecoderLayer(self, tf.keras.layers.Layer):
+    class _DecoderLayer(tf.keras.layers.Layer):
         def __init__(self, d_model, num_heads, dff, rate=0.1):
-            super(DecoderLayer, self).__init__()
+            super(_DecoderLayer, self).__init__()
 
-            self.mha1 = MultiHeadAttention(d_model, num_heads)
-            self.mha2 = MultiHeadAttention(d_model, num_heads)
+            self.mha1 = _MultiHeadAttention(d_model, num_heads)
+            self.mha2 = _MultiHeadAttention(d_model, num_heads)
 
             self.ffn = point_wise_feed_forward_network(d_model, dff)
      
@@ -717,10 +718,10 @@ class TfTransformer:
             
             return out3, attn_weights_block1, attn_weights_block2     
 
-    class Encoder(self, tf.keras.layers.Layer):
+    class _Encoder(tf.keras.layers.Layer):
         def __init__(self, num_layers, d_model, num_heads, dff, input_vocab_size,
                                  maximum_position_encoding, rate=0.1):
-            super(Encoder, self).__init__()
+            super(_Encoder, self).__init__()
 
             self.d_model = d_model
             self.num_layers = num_layers
@@ -729,7 +730,7 @@ class TfTransformer:
             self.pos_encoding = positional_encoding(maximum_position_encoding, self.d_model)
             
             
-            self.enc_layers = [EncoderLayer(d_model, num_heads, dff, rate) 
+            self.enc_layers = [_EncoderLayer(d_model, num_heads, dff, rate) 
                                                  for _ in range(num_layers)]
         
             self.dropout = tf.keras.layers.Dropout(rate)
@@ -750,7 +751,7 @@ class TfTransformer:
             
             return x    # (batch_size, input_seq_len, d_model)     
 
-    class Decoder(self, tf.keras.layers.Layer):
+    class _Decoder(tf.keras.layers.Layer):
         def __init__(self, num_layers, d_model, num_heads, dff, target_vocab_size,
                                  maximum_position_encoding, rate=0.1):
             super(Decoder, self).__init__()
@@ -761,7 +762,7 @@ class TfTransformer:
             self.embedding = tf.keras.layers.Embedding(target_vocab_size, d_model)
             self.pos_encoding = positional_encoding(maximum_position_encoding, d_model)
             
-            self.dec_layers = [DecoderLayer(d_model, num_heads, dff, rate) 
+            self.dec_layers = [_DecoderLayer(d_model, num_heads, dff, rate) 
                                                  for _ in range(num_layers)]
             self.dropout = tf.keras.layers.Dropout(rate)
             
@@ -787,15 +788,15 @@ class TfTransformer:
             return x, attention_weights
 
 
-    class Transformer(self, tf.keras.Model):
+    class _Transformer(tf.keras.Model):
         def __init__(self, num_layers, d_model, num_heads, dff, input_vocab_size, 
                                  target_vocab_size, pe_input, pe_target, rate=0.1):
-            super(Transformer, self).__init__()
+            super(_Transformer, self).__init__()
 
-            self.encoder = Encoder(num_layers, d_model, num_heads, dff, 
+            self.encoder = _Encoder(num_layers, d_model, num_heads, dff, 
                                                          input_vocab_size, pe_input, rate)
 
-            self.decoder = Decoder(num_layers, d_model, num_heads, dff, 
+            self.decoder = _Decoder(num_layers, d_model, num_heads, dff, 
                                                          target_vocab_size, pe_target, rate)
 
             self.final_layer = tf.keras.layers.Dense(target_vocab_size)
@@ -814,9 +815,9 @@ class TfTransformer:
             return final_output, attention_weights
 
 
-    class CustomSchedule(self, tf.keras.optimizers.schedules.LearningRateSchedule):
+    class _CustomSchedule(tf.keras.optimizers.schedules.LearningRateSchedule):
         def __init__(self, d_model, warmup_steps=4000):
-            super(CustomSchedule, self).__init__()
+            super(_CustomSchedule, self).__init__()
             
             self.d_model = d_model
             self.d_model = tf.cast(self.d_model, tf.float32)
