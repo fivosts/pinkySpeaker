@@ -53,6 +53,25 @@ def runTransformer(target = "greeklish", datapath = "../dataset/pink_floyd", dum
     tokenizer = tfds.features.text.SubwordTextEncoder.build_from_corpus(
                     (x.numpy() for sublist in temp_dataset for x in sublist), target_vocab_size = 2**13)
 
+
+    def sample_greeklish():
+        return random_target_list[randint(0, len(random_target_list) - 1)]
+
+
+    def labeller(inp, tar):
+        # inp = [
+        #         [tokenizer.vocab_size]
+        #         + tokenizer.encode(inp)
+        #         + [tokenizer.vocab_size + 1]
+        # ]
+
+        # tar = [
+        #         [tokenizer.vocab_size]
+        #         + tokenizer.encode(tar)
+        #         + [tokenizer.vocab_size + 1]
+        # ]
+        return inp, tar
+
     ## Now, once again files are iterated and lines are converted to tf-dataset
     ## for each non-empty line
     ## add to the final dataset a pair of input and target
@@ -61,29 +80,50 @@ def runTransformer(target = "greeklish", datapath = "../dataset/pink_floyd", dum
     ## Also, pair is converted to tf tensors.
     for file in os.listdir(path):
         line = tf.data.TextLineDataset(pt.join(path, file))
-        for l in line:
-            if l.numpy().decode("utf-8")  != "":
-                inp_example = [
-                                [tokenizer.vocab_size] 
-                              + tokenizer.encode(l.numpy()) 
-                              + [tokenizer.vocab_size + 1]
-                              ]
-                if target == "greeklish":
-                    tar_example = [
-                                    [tokenizer.vocab_size]
-                                  + tokenizer.encode(random_target_list[randint(0, len(random_target_list) - 1)].numpy()) 
-                                  + [tokenizer.vocab_size + 1]
-                                  ]
-                else:
-                    tar_example = [
-                                    [tokenizer.vocab_size] 
-                                  + tokenizer.encode(l.numpy()) 
-                                  + [tokenizer.vocab_size + 1]
-                                  ]
-                src_dataset.append((tf.convert_to_tensor(inp_example, dtype = tf.int64), tf.convert_to_tensor(tar_example, dtype = tf.int64)))
+        if target == "greeklish":
+            tf_lines = line.map(lambda inp : labeller(inp, sample_greeklish()))
+        else:
+            tf_lines = line.map(lambda inp : labeller(inp, inp))
+        src_dataset.append(tf_lines)
+        # for l in line:
+        #     if l.numpy().decode("utf-8")  != "":
+        #         inp_example = [
+        #                         [tokenizer.vocab_size] 
+        #                       + tokenizer.encode(l.numpy()) 
+        #                       + [tokenizer.vocab_size + 1]
+        #                       ]
+        #         if target == "greeklish":
+        #             tar_example = [
+        #                             [tokenizer.vocab_size]
+        #                           + tokenizer.encode(random_target_list[randint(0, len(random_target_list) - 1)].numpy()) 
+        #                           + [tokenizer.vocab_size + 1]
+        #                           ]
+        #         else:
+        #             tar_example = [
+        #                             [tokenizer.vocab_size] 
+        #                           + tokenizer.encode(l.numpy()) 
+        #                           + [tokenizer.vocab_size + 1]
+        #                           ]
+
+        #         # src_dataset(l.map())
+        #         src_dataset.append((tf.convert_to_tensor(inp_example, dtype = tf.int64), tf.convert_to_tensor(tar_example, dtype = tf.int64)))
 
 
                 # new_inp = tf.convert_to_tensor([[x for x in inp]], dtype = tf.int64)
+
+
+    tf_dataset = src_dataset[0]
+    for d in src_dataset[1:]:
+        tf_dataset = tf_dataset.concatenate(d)
+    print(tf_dataset)
+    print(type(tf_dataset))
+    for i in tf_dataset:
+        print(i)
+        print(type(i))
+        for j in i:
+            print(j)
+            print(type(j))
+        break
 
 
 
@@ -113,8 +153,15 @@ def runTransformer(target = "greeklish", datapath = "../dataset/pink_floyd", dum
     plt.xlim((0, 512))
     plt.ylabel('Position')
     plt.colorbar()
-    plt.show()
+    # plt.show()
 
+
+    print(train_dataset)
+    print(type(train_dataset))
+    for i in train_dataset:
+        print(i)
+        print(type(i))
+        exit()
 
     ## Now some sanity-check executions of the classes
     x = tf.constant([[7, 6, 0, 0, 1], [1, 2, 3, 0, 0], [0, 0, 0, 4, 5]])
