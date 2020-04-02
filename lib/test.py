@@ -218,10 +218,10 @@ def runTransformer(target = "greeklish", datapath = "../dataset/pink_floyd", dum
     fn_out.shape    # (batch_size, tar_seq_len, target_vocab_size)
 
     ## And here is the actual model
-    num_layers = 4
-    d_model = 128
-    dff = 512
-    num_heads = 8
+    num_layers = 2
+    d_model = 64
+    dff = 64
+    num_heads = 2
 
     input_vocab_size = tokenizer.vocab_size + 2
     target_vocab_size = tokenizer.vocab_size + 2
@@ -264,7 +264,7 @@ def runTransformer(target = "greeklish", datapath = "../dataset/pink_floyd", dum
     #     ckpt.restore(ckpt_manager.latest_checkpoint)
     #     print ('Latest checkpoint restored!!')
 
-    EPOCHS = 20
+    EPOCHS = 40
 
     train_step_signature = [
             tf.TensorSpec(shape=(None, None), dtype=tf.int64),
@@ -798,3 +798,5 @@ def translate(sentence, transformer, plot=''):
     if plot:
         plot_attention_weights(attention_weights, sentence, result, plot)
     return predicted_sentence
+
+runTransformer()
