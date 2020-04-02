@@ -129,9 +129,9 @@ def runTransformer(target = "greeklish", datapath = "../dataset/pink_floyd", dum
     train_preprocessed = (
             tf_dataset
             .map(tf_encode) 
-            .filter(filter_max_length)
+            # .filter(filter_max_length)
             # cache the dataset to memory to get a speedup while reading from it.
-            .cache()
+            # .cache()
             .shuffle(BUFFER_SIZE))
 
     train_dataset = (train_preprocessed
@@ -634,22 +634,22 @@ class CustomSchedule(tf.keras.optimizers.schedules.LearningRateSchedule):
         return tf.math.rsqrt(self.d_model) * tf.math.minimum(arg1, arg2)
 
 
-def encode(lang1, lang2):
-    lang1 = [tokenizer.vocab_size] + tokenizer.encode(
-            lang1.numpy()) + [tokenizer.vocab_size+1]
+def encode(inp, tar):
+    inp = [tokenizer.vocab_size] + tokenizer.encode(
+            inp.numpy()) + [tokenizer.vocab_size+1]
 
-    lang2 = [tokenizer.vocab_size] + tokenizer.encode(
-            lang2.numpy()) + [tokenizer.vocab_size+1]
+    tar = [tokenizer.vocab_size] + tokenizer.encode(
+            tar.numpy()) + [tokenizer.vocab_size+1]
     
-    return lang1, lang2
+    return inp, tar
 
 
-def tf_encode(pt, en):
-    result_pt, result_en = tf.py_function(encode, [pt, en], [tf.int64, tf.int64])
-    result_pt.set_shape([None])
-    result_en.set_shape([None])
+def tf_encode(inp, tar):
+    res_inp, res_tar = tf.py_function(encode, [inp, tar], [tf.int64, tf.int64])
+    res_inp.set_shape([None])
+    res_tar.set_shape([None])
 
-    return result_pt, result_en
+    return res_inp, res_tar
 
 def filter_max_length(x, y, max_length=MAX_LENGTH):
     return tf.logical_and(tf.size(x) <= max_length,
