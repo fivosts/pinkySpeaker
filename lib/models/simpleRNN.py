@@ -129,7 +129,7 @@ class simpleRNN:
         vocab_size, embedding_size = weights.shape
 
         lm = Sequential()
-        # lm.add(Masking(mask_value = self.word2idx("endline"), input_shape = ([None])))
+        # lm.add(Masking(mask_value = self.word2idx("<ENDLINE>"), input_shape = ([None])))
         lm.add(Embedding(input_dim=vocab_size, output_dim=embedding_size, trainable = False, weights=[weights]))
         lm.add(Dropout(0.2))
         for _ in range(LSTM_Depth):
@@ -252,7 +252,7 @@ class simpleRNN:
         song_spl_inp[-1] += [self._maskToken] * (self._lyric_sequence_length - len(song_spl_inp[-1]))
         song_spl_out[-1] += [self._maskToken] * (self._lyric_sequence_length - len(song_spl_out[-1]))
 
-        song_sample_weight = [[0 if x == self._maskToken else 50 if x == "endfile" else 50 if x == "endline" else 1 for x in inp] for inp in song_spl_inp]
+        song_sample_weight = [[0 if x == self._maskToken else 50 if x == "endfile" else 50 if x == "<ENDLINE>" else 1 for x in inp] for inp in song_spl_inp]
 
         return song_spl_inp, song_spl_out, song_sample_weight
 
@@ -261,7 +261,7 @@ class simpleRNN:
         clw = {}
         for i in range(vocab_size):
             clw[i] = 1
-        clw[self.word2idx("endline")] = 50
+        clw[self.word2idx("<ENDLINE>")] = 50
         return clw
 
     ## Receive a word, return the index in the vocabulary
@@ -279,7 +279,7 @@ class simpleRNN:
         ret[idx] = 1000
         return ret
 
-    ## Converts "endline" to '\n' for pretty printing
+    ## Converts "<ENDLINE>" to '\n' for pretty printing
     ## Also masks meta-tokens but throws a warning
     def _prettyPrint(self, text):
         self._logger.debug("pinkySpeaker.lib.model.simpleRNN._prettyPrint()")
@@ -289,7 +289,7 @@ class simpleRNN:
         elif self._maskToken in text:
             self._logger.warning("MASK_TOKEN has been found to generated text!")
 
-        return text.replace("endline ", "\n").replace("endfile", "\nEND")
+        return text.replace("<ENDLINE> ", "\n").replace("endfile", "\nEND")
 
     ## Just fit it!
     def fit(self, epochs = 50, save_model = None):
@@ -385,7 +385,7 @@ class simpleRNN:
         self._logger.debug("pinkySpeaker.lib.model.simpleRNN._generate_next()")
 
         word_idxs = [self.word2idx(word) for word in text.lower().split()]
-        # init_endline_bias = model.layers[-2].weights[1][self.word2idx("endline")]
+        # init_<ENDLINE>_bias = model.layers[-2].weights[1][self.word2idx("<ENDLINE>")]
         # init_endfile_bias = model.layers[-2].weights[1][self.word2idx("endfile")]
         for i in range(num_generated):
             prediction = model.predict(x=np.array(word_idxs))
@@ -400,7 +400,7 @@ class simpleRNN:
             idx = self._sample(samples, temperature=0.7)
             word_idxs.append(idx)
 
-            if self.idx2word(idx) == "endfile" or (title and self.idx2word(idx) == "endline"):
+            if self.idx2word(idx) == "endfile" or (title and self.idx2word(idx) == "<ENDLINE>"):
                 break
 
         return ' '.join(self.idx2word(idx) for idx in word_idxs)
