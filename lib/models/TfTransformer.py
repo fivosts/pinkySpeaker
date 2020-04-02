@@ -793,16 +793,16 @@ class utils:
     def __init__():
         return
 
-    def filter_max_length(x, y, max_length=40):
+    def filter_max_length(self, x, y, max_length=40):
         return tf.logical_and(tf.size(x) <= max_length,
                               tf.size(y) <= max_length)
 
-    def get_angles(pos, i, d_model):
+    def get_angles(self, pos, i, d_model):
         angle_rates = 1 / np.power(10000, (2 * (i//2)) / np.float32(d_model))
         return pos * angle_rates
 
-    def positional_encoding(position, d_model):
-        angle_rads = get_angles(np.arange(position)[:, np.newaxis],
+    def positional_encoding(self, position, d_model):
+        angle_rads = self.get_angles(np.arange(position)[:, np.newaxis],
                                                         np.arange(d_model)[np.newaxis, :],
                                                         d_model)
         
@@ -813,14 +813,14 @@ class utils:
         pos_encoding = angle_rads[np.newaxis, ...]
         return tf.cast(pos_encoding, dtype=tf.float32)
 
-    def create_padding_mask(seq):
+    def create_padding_mask(self, seq):
         seq = tf.cast(tf.math.equal(seq, 0), tf.float32)
         
         # add extra dimensions to add the padding
         # to the attention logits.
         return seq[:, tf.newaxis, tf.newaxis, :]    # (batch_size, 1, 1, seq_len)
 
-    def create_look_ahead_mask(size):
+    def create_look_ahead_mask(self, size):
         mask = 1 - tf.linalg.band_part(tf.ones((size, size)), -1, 0)
         return mask    # (seq_len, seq_len)
 
@@ -855,7 +855,7 @@ class utils:
         output = tf.matmul(attention_weights, v)    # (..., seq_len_q, depth_v)
         return output, attention_weights
 
-    def print_out(q, k, v):
+    def print_out(self, q, k, v):
         temp_out, temp_attn = scaled_dot_product_attention(
                 q, k, v, None)
         l.getLogger().info('Attention weights are:')
@@ -864,35 +864,37 @@ class utils:
         l.getLogger().info(temp_out)
         return
 
-    def point_wise_feed_forward_network(d_model, dff):
+    def point_wise_feed_forward_network(self, d_model, dff):
         return tf.keras.Sequential([
                 tf.keras.layers.Dense(dff, activation='relu'),    # (batch_size, seq_len, dff)
                 tf.keras.layers.Dense(d_model)    # (batch_size, seq_len, d_model)
         ])
 
-    def loss_function(real, pred, loss_object):
+    def loss_function(self, real, pred, loss_object):
         mask = tf.math.logical_not(tf.math.equal(real, 0))
         loss_ = loss_object(real, pred)
         mask = tf.cast(mask, dtype=loss_.dtype)
         loss_ *= mask
         return tf.reduce_mean(loss_)
 
-    def create_masks(inp, tar):
+    def create_masks(self, inp, tar):
         # Encoder padding mask
-        enc_padding_mask = create_padding_mask(inp)
+        enc_padding_mask = self.create_padding_mask(inp)
         # Used in the 2nd attention block in the decoder.
         # This padding mask is used to mask the encoder outputs.
-        dec_padding_mask = create_padding_mask(inp)
+        dec_padding_mask = self.create_padding_mask(inp)
         # Used in the 1st attention block in the decoder.
         # It is used to pad and mask future tokens in the input received by 
         # the decoder.
-        look_ahead_mask = create_look_ahead_mask(tf.shape(tar)[1])
-        dec_target_padding_mask = create_padding_mask(tar)
+        look_ahead_mask = self.create_look_ahead_mask(tf.shape(tar)[1])
+        dec_target_padding_mask = self.create_padding_mask(tar)
         combined_mask = tf.maximum(dec_target_padding_mask, look_ahead_mask)
         
         return enc_padding_mask, combined_mask, dec_padding_mask
 
-    def evaluate(inp_sentence, transformer):
+    ## TODO move this to class
+    ## Too many deps here. This won't work
+    def evaluate(self, inp_sentence, transformer):
         start_token = [tokenizer.vocab_size]
         end_token = [tokenizer.vocab_size + 1]
         
@@ -905,8 +907,9 @@ class utils:
         decoder_input = [tokenizer.vocab_size]
         output = tf.expand_dims(decoder_input, 0)
             
+        MAX_LENGTH = 40
         for i in range(MAX_LENGTH):
-            enc_padding_mask, combined_mask, dec_padding_mask = create_masks(
+            enc_padding_mask, combined_mask, dec_padding_mask = self.create_masks(
                     encoder_input, output)
         
             # predictions.shape == (batch_size, seq_len, vocab_size)
@@ -932,7 +935,7 @@ class utils:
         return tf.squeeze(output, axis=0), attention_weights
 
     ## TODO move this to plotter
-    def plot_attention_weights(attention, sentence, result, layer):
+    def plot_attention_weights(self, attention, sentence, result, layer):
         fig = plt.figure(figsize=(16, 8))
         
         sentence = tokenizer.encode(sentence)
@@ -961,10 +964,10 @@ class utils:
         plt.show()
 
     ## TODO rename this to predict and move to tf.transformer
-    def translate(sentence, transformer, plot=''):
-        result, attention_weights = evaluate(sentence, transformer)
+    def translate(self, sentence, transformer, plot=''):
+        result, attention_weights = self.evaluate(sentence, transformer)
         predicted_sentence = tokenizer.decode([i for i in result if i < tokenizer.vocab_size])    
 
         if plot:
-            plot_attention_weights(attention_weights, sentence, result, plot)
+            self.plot_attention_weights(attention_weights, sentence, result, plot)
         return predicted_sentence
