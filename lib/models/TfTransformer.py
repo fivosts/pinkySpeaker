@@ -134,13 +134,13 @@ class TfTransformer:
             if not en:
                 str_dataset = datapoint
             else:
-                str_dataset.concatenate(datapoint)
+                str_dataset = str_dataset.concatenate(datapoint)
         return str_dataset
 
     ## Receive tf.Dataset as input
     ## Initialize tokenizer, construct vocabulary, return tokenizer
     ## Input Dataset is considered to be the return type of _raw2TfString
-    def _initTokenizer(self, str_dataset, target_vocab_size = 2**13):
+    def _initTokenizer(self, str_dataset, target_vocab_size = 2**15):
         self._logger.debug("pinkySpeaker.lib.model.TfTransformer._initTokenizer()")
 
         tokenizer = tfds.features.text.SubwordTextEncoder.build_from_corpus(
@@ -158,6 +158,9 @@ class TfTransformer:
 
         self._logger.info('Tokenized string is {}'.format(tokenized_string))
         self._logger.info('The original string: {}'.format(original_string))
+
+        for ts in tokenized_string:
+            self._logger.info('{} ----> {}'.format(ts, tokenizer.decode([ts])))
 
         assert original_string == sample_string
         return
