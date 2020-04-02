@@ -87,8 +87,15 @@ class TfTransformer:
     ## Core function that assembles the transformer
     def _setupTransformer(self, num_layers, d_model, dff, num_heads, input_vocab_size, target_vocab_size, dropout_rate):
         self._logger.debug("pinkySpeaker.lib.model.TfTransformer._setupTransformer()")
-        ## TODO
-        return
+        return TFTransformer(num_layers, 
+                            d_model, 
+                            num_heads, 
+                            dff,
+                            input_vocab_size, 
+                            target_vocab_size, 
+                            pe_input=input_vocab_size, 
+                            pe_target=target_vocab_size,
+                            rate=dropout_rate)
 
     ## Core function that assembles the optimizer and training schedule
     def _setupOptimizer(self, d_model, adam_params = {'beta_1': 0.9, 'beta_2': 0.98, 'epsilon': 1e-9}):
