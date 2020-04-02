@@ -5,7 +5,7 @@
 This is the entry point of the application.
 """
 from lib import dataloader as dl
-from lib.models import simpleRNN, Transformer
+from lib.models import simpleRNN, Transformer, TfTransformer
 import sys
 from os import path as pt
 sys.path.append(pt.dirname("/home/fivosts/PhD/Code/eupy/eupy"))
@@ -15,7 +15,8 @@ import os
 
 MODEL_ZOO = {
 				'simpleRNN'		: simpleRNN.simpleRNN,
-				'Transformer'	: Transformer.Transformer
+				'Transformer'	: Transformer.Transformer,
+				'TfTransformer'	: TfTransformer.TfTransformer
 			}
 
 
