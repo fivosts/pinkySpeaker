@@ -439,7 +439,7 @@ class TfTransformer:
         return text.replace("<ENDLINE> ", "\n")
 
     ## Just fit it!
-    def fit(self, epochs = 100, save_model = None):
+    def fit(self, epochs = 200, save_model = None):
         self._logger.debug("pinkySpeaker.lib.model.TfTransformer.fit()")
 
         # checkpoint_path = "./checkpoints/train"
@@ -453,7 +453,8 @@ class TfTransformer:
         # if ckpt_manager.latest_checkpoint:
         #     ckpt.restore(ckpt_manager.latest_checkpoint)
         #     print ('Latest checkpoint restored!!')
-
+        import matplotlib.pyplot as plt
+        
         for epoch in range(epochs):
             start = time.time()
             
@@ -468,6 +469,9 @@ class TfTransformer:
                             .format( epoch + 1, batch, self._model['optimizer']['loss'].result(), 
                                     self._model['optimizer']['accuracy'].result())
                                     )
+
+            plt.scatter(epoch, self._model['optimizer']['loss'].result().numpy(), color='blue')
+            plt.pause(0.1)
             # if (epoch + 1) % 5 == 0:
             #     ckpt_save_path = ckpt_manager.save()
             #     print ('Saving checkpoint for epoch {} at {}'.format(epoch+1, ckpt_save_path))
