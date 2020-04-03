@@ -19,6 +19,7 @@ from keras_transformer import get_model, decode
 
 import tensorflow as tf
 import tensorflow_datasets as tfds
+import time
 
 class TfTransformer:
 
@@ -438,12 +439,72 @@ class TfTransformer:
         return text.replace("<ENDLINE> ", "\n")
 
     ## Just fit it!
-    def fit(self, epochs = 50, save_model = None):
+    def fit(self, epochs = 100, save_model = None):
         self._logger.debug("pinkySpeaker.lib.model.TfTransformer.fit()")
 
+        # checkpoint_path = "./checkpoints/train"
+        ## TODO checkout checkpoint manager
+        # ckpt = tf.train.Checkpoint(transformer=transformer,
+        #                                                      optimizer=optimizer)
 
+        # ckpt_manager = tf.train.CheckpointManager(ckpt, checkpoint_path, max_to_keep=5)
+
+        # if a checkpoint exists, restore the latest checkpoint.
+        # if ckpt_manager.latest_checkpoint:
+        #     ckpt.restore(ckpt_manager.latest_checkpoint)
+        #     print ('Latest checkpoint restored!!')
+
+        for epoch in range(epochs):
+            start = time.time()
+            
+            self._model['optimizer']['loss'].reset_states()
+            self._model['optimizer']['accuracy'].reset_states()
+            
+            for (batch, (inp, tar)) in enumerate(self._dataset):
+                self.train_step(inp, tar)
+        
+                if batch % 5 == 0:
+                    self._logger.info('Epoch {} Batch {} Loss {:.4f} Accuracy {:.4f}'
+                            .format( epoch + 1, batch, self._model['optimizer']['loss'].result(), 
+                                    self._model['optimizer']['accuracy'].result())
+                                    )
+            # if (epoch + 1) % 5 == 0:
+            #     ckpt_save_path = ckpt_manager.save()
+            #     print ('Saving checkpoint for epoch {} at {}'.format(epoch+1, ckpt_save_path))
+                
+            self._logger.info('Epoch {} Loss {:.4f} Accuracy {:.4f}'.format(epoch + 1, 
+                                                                self._model['optimizer']['loss'].result(), 
+                                                                self._model['optimizer']['accuracy'].result())
+                                                                )
+            self._logger.info('Time taken for 1 epoch: {} secs\n'.format(time.time() - start))
 
         return 
+
+    @tf.function(input_signature = [tf.TensorSpec(shape = (None, None), dtype = tf.int64),
+                                    tf.TensorSpec(shape = (None, None), dtype = tf.int64)]
+                )
+    def train_step(self, inp, target):
+
+        tar_inp = target[:, :-1]
+        tar_real = target[:, 1:]
+        
+        enc_padding_mask, combined_mask, dec_padding_mask = utils().create_masks(inp, tar_inp)
+        
+        with tf.GradientTape() as tape:
+            predictions, _ = self._model['transformer'](inp, tar_inp, 
+                                                         True, 
+                                                         enc_padding_mask, 
+                                                         combined_mask, 
+                                                         dec_padding_mask)
+            loss = utils().loss_function(tar_real, predictions, self._model['optimizer']['loss_obj'])
+
+        gradients = tape.gradient(loss, self._model['transformer'].trainable_variables)        
+        self._model['optimizer']['adam'].apply_gradients(zip(gradients, self._model['transformer'].trainable_variables))
+        
+        self._model['optimizer']['loss'](loss)
+        self._model['optimizer']['accuracy'](tar_real, predictions)
+
+        return
 
     ## Run a model prediction based on sample input
     def predict(self, seed, load_model = None):
@@ -602,7 +663,7 @@ class _MultiHeadAttention(tf.keras.layers.Layer):
         
         # scaled_attention.shape == (batch_size, num_heads, seq_len_q, depth)
         # attention_weights.shape == (batch_size, num_heads, seq_len_q, seq_len_k)
-        scaled_attention, attention_weights = scaled_dot_product_attention(
+        scaled_attention, attention_weights = utils().scaled_dot_product_attention(
                 q, k, v, mask)
         
         scaled_attention = tf.transpose(scaled_attention, perm=[0, 2, 1, 3])    # (batch_size, seq_len_q, num_heads, depth)
@@ -824,7 +885,7 @@ class utils:
         mask = 1 - tf.linalg.band_part(tf.ones((size, size)), -1, 0)
         return mask    # (seq_len, seq_len)
 
-    def scaled_dot_product_attention(q, k, v, mask):
+    def scaled_dot_product_attention(self, q, k, v, mask):
         """Calculate the attention weights.
         q, k, v must have matching leading dimensions.
         k, v must have matching penultimate dimension, i.e.: seq_len_k = seq_len_v.
@@ -856,7 +917,7 @@ class utils:
         return output, attention_weights
 
     def print_out(self, q, k, v):
-        temp_out, temp_attn = scaled_dot_product_attention(
+        temp_out, temp_attn = self.scaled_dot_product_attention(
                 q, k, v, None)
         l.getLogger().info('Attention weights are:')
         l.getLogger().info(temp_attn)
