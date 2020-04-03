@@ -454,7 +454,12 @@ class TfTransformer:
         #     ckpt.restore(ckpt_manager.latest_checkpoint)
         #     print ('Latest checkpoint restored!!')
         import matplotlib.pyplot as plt
-        
+        fig, ax = plt.subplots()
+        ax.yaxis.grid(True)
+        ax.set_xlim([0, epochs])
+        ylim = 0
+        stack = []
+
         for epoch in range(epochs):
             start = time.time()
             
@@ -470,7 +475,11 @@ class TfTransformer:
                                     self._model['optimizer']['accuracy'].result())
                                     )
 
-            plt.scatter(epoch, self._model['optimizer']['loss'].result().numpy(), color='blue')
+            stack.append(self._model['optimizer']['loss'].result().numpy())
+            ylim = max(ylim, self._model['optimizer']['loss'].result().numpy())
+            ax.set_ylim([0, ylim + 0.1*ylim])
+            # plt.scatter(epoch, self._model['optimizer']['loss'].result().numpy(), color='blue')
+            ax.plot(np.arange(epoch+1), stack, color = 'red')
             plt.pause(0.1)
             # if (epoch + 1) % 5 == 0:
             #     ckpt_save_path = ckpt_manager.save()
