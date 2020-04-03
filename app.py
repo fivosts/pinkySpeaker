@@ -70,7 +70,7 @@ def main():
 		artist_list = [os.path.join(args.datapath, x.lower()) for x in args.train]
 		dataset = dl.fetchData(artist_list, args.plot_samples)
 		model = MODEL_ZOO[args.model](data = dataset, LSTM_Depth = 8)
-		loss = model.fit(epochs = 50, save_model = args.modelpath)
+		loss = model.fit(save_model = args.modelpath)
 	else: ## args.mode == "gen"
 		model = MODEL_ZOO[args.model](model = args.modelpath)
 		while(True):
