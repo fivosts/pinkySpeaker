@@ -460,7 +460,7 @@ class TfTransformer:
             'accuracy': {'y': []}
         }
 
-        history = {'loss': [], 'accuracy'}
+        history = {'loss': [], 'accuracy': []}
 
         for epoch in range(epochs):
             start = time.time()
@@ -489,7 +489,7 @@ class TfTransformer:
 
             history['loss'].append(self._model['optimizer']['loss'].result().numpy())
             history['accuracy'].append(self._model['optimizer']['accuracy'].result().numpy())
-            
+
             # if (epoch + 1) % 5 == 0:
             #     ckpt_save_path = ckpt_manager.save()
             #     print ('Saving checkpoint for epoch {} at {}'.format(epoch+1, ckpt_save_path))
