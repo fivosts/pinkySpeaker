@@ -225,217 +225,6 @@ class TfTransformer:
         tar = self._model['tokenizer'].encode(tar.numpy()) + [self._model['tokenizer'].vocab_size+1]
         return inp, tar
 
-    ## Initialize and return word model
-    def _initWordModel(self, inp_sentences):
-        self._logger.debug("pinkySpeaker.lib.model.TfTransformer._initWordModel()")
-        inp_sentences.append([self._padToken]) # Token that ensembles masking of training weights. Used to pad sequence length
-        inp_sentences.append([self._startToken]) # Token that ensembles the start of a sequence
-        wm = gensim.models.Word2Vec(inp_sentences, size = 300, min_count = 1, window = 4, iter = 200)
-        self._logger.info("Word2Vec word model initialized")
-        return wm
-
-    ## Function to initialize and return title model
-    ## Needs to be fixed
-    def _initTitleModel(self, weights, LSTM_Depth):
-        self._logger.debug("pinkySpeaker.lib.model.TfTransformer._initTitleModel()")
-
-        vocab_size, embedding_size = weights.shape
-        tm = Sequential()
-        tm.add(Embedding(input_dim=vocab_size, output_dim=embedding_size, weights=[weights]))
-        tm.add(Dropout(0.2))
-        for _ in range(LSTM_Depth - 1):
-            tm.add(LSTM(units=embedding_size, return_sequences=True))
-            tm.add(Dropout(0.2))
-        tm.add(LSTM(units=2 * embedding_size, return_sequences=False))
-        tm.add(Dropout(0.2))
-        tm.add(Dense(units=vocab_size))
-        tm.add(Activation('softmax'))
-        tm.compile(optimizer='adam', loss='sparse_categorical_crossentropy')
-
-        self._logger.info("Title model initialized")
-        self._logger.info(tm.summary())
-        return tm
-
-    ## Function to initialize and return lyric model
-    def _initLyricModel(self, weights):
-        self._logger.debug("pinkySpeaker.lib.model.TfTransformer._initLyricModel()")
-
-        vocab_size, embedding_size = weights.shape
-
-        lm = get_model(
-            token_num = vocab_size,
-            embed_dim = embedding_size,
-            encoder_num = 2,
-            decoder_num = 2,
-            head_num = 2,
-            hidden_dim = 128,
-            attention_activation = 'relu',
-            feed_forward_activation = 'relu',
-            dropout_rate = 0.05,
-            embed_weights = weights,
-            embed_trainable = False
-        )
-
-        lm.compile(optimizer='adam', loss='sparse_categorical_crossentropy')
-
-        self._logger.info("TfTransformer model initialized")
-        self._logger.info(lm.summary())
-        return lm
-
-    ## Set class weights for pad token and start token to 0.
-    def _setClassWeight(self, vocab_size):
-        self._logger.debug("pinkySpeaker.lib.model.TfTransformer._setClassWeight()")
-        clw = {}
-        for i in range(vocab_size):
-            clw[i] = 1
-        clw[self.word2idx(self._padToken)] = 0
-        clw[self.word2idx(self._startToken)] = 0
-        return clw
-
-    ## Precompute raw data information to construct word model
-    ## Returns a list of chunks of sentences, the max length of titles
-    ## and the total length of titles
-    def _constructSentences(self, raw_data):
-        self._logger.debug("pinkySpeaker.lib.model.TfTransformer._constructSentences()")
-        self._logger.info("Sentence preprocessing for word model")
-
-        sentence_size = 10
-        max_title_length = 0
-        all_titles_length = 0
-        words = []
-        for song in raw_data:
-
-            curr_title_length = len(song['title'])
-            all_titles_length += curr_title_length - 1
-            if curr_title_length > max_title_length:
-                max_title_length = curr_title_length
-            
-            for word in song['title']:
-                words.append(word)
-            for sent in song['lyrics']:
-                for word in sent:
-                    words.append(word)
-        return self._listToChunksList(words, sentence_size), max_title_length, all_titles_length
-
-    ## Converts a sentence-list of words-list to a list of chunks of sentences
-    def _listToChunksList(self, lst, n):
-        self._logger.debug("pinkySpeaker.lib.model.TfTransformer._listToChunksList()")
-        chunk_list = []
-        for i in range(0, len(lst), n):
-            chunk_list.append(lst[i: i + n])
-        return chunk_list
-
-    def _constructTLSet(self, raw_data, vocab_size, max_title_length, all_titles_length):
-        self._logger.debug("pinkySpeaker.lib.model.TfTransformer._constructTLSet()")
-
-        # lyric_set = {
-        #              'input'            : np.zeros([2, len(raw_data), self._lyric_sequence_length], dtype = np.int32),
-        #              'sample_weight'    : np.zeros([len(raw_data), self._lyric_sequence_length], dtype = np.int32),
-        #              # lyric target will be the output of a softmax, i.e. a float and should be considered as such.
-        #              'output'           : np.zeros([len(raw_data), self._lyric_sequence_length, 1], dtype = np.float64) 
-        #              }   
-
-        encoder_input = []
-        decoder_input = []
-        decoder_output = []
-        sample_weight = []
-
-        ## Iterate over each song. Keep index
-        for song in raw_data:
-
-            ## We need a fixed sequence length. The next function will grab a song and will return NN inputs and targets, sized _lyric_sequence_length
-            ## If the song is bigger than this, multiple pairs of inputs/target will be returned.
-            encoder_in, decoder_in, decoder_target, song_sample_weight = self._splitSongtoSentence(" ".join([" ".join(x) for x in ([song['title']] + song['lyrics'])]).split())
-
-            ## For each input/target pair...
-            for enc_in, dec_in, dec_out, weight in zip(encoder_in, decoder_in, decoder_target, song_sample_weight):
-                ## Convert str array to embed index tensor
-                ## And convert target str tokens to indices. Indices to one hot vecs vocab_size sized. Pass one-hot vecs through softmax to construct final target
-                encoder_input.append(np.asarray([self.word2idx(x) for x in enc_in]))
-                decoder_input.append(np.asarray([self.word2idx(x) for x in dec_in]))
-                decoder_output.append(np.asarray([[self.word2idx(x)] for x in dec_out]))
-                sample_weight.append(np.asarray(weight))
-
-        lyric_set = {
-                        'encoder_input'     : np.asarray(encoder_input, dtype = np.int32),
-                        'decoder_input'     : np.asarray(decoder_input, dtype = np.int32),                        
-                        'output'            : np.asarray(decoder_output, dtype = np.int32),
-                        'sample_weight'     : np.asarray(sample_weight, dtype = np.int32)
-                    }
-
-        self._logger.info("Lyric encoder input tensor dimensions: {}".format(lyric_set['encoder_input'].shape))
-        self._logger.info("Lyric decoder input tensor dimensions: {}".format(lyric_set['decoder_input'].shape))
-        self._logger.info("Lyric Target tensor dimensions: {}".format(lyric_set['output'].shape))
-
-        return lyric_set
-
-    ## Receives an input tensor and returns an elem-by-elem softmax computed vector of the same dims
-    def _softmax(self, inp_tensor):
-        self._logger.debug("pinkySpeaker.lib.model.TfTransformer._softmax()")
-        m = np.max(inp_tensor)
-        e = np.exp(inp_tensor - m)
-        return e / np.sum(e)
-
-    def _splitSongtoSentence(self, curr_song):
-        self._logger.debug("pinkySpeaker.lib.model.TfTransformer._splitSongtoSentence()")
-        
-        step = self._lyric_sequence_length - 1
-
-        encoder_input  = [ [self._startToken] + curr_song[x : min(len(curr_song), x + step)] for x in range(0, len(curr_song), step)]
-        decoder_input  = [ curr_song[x : min(len(curr_song), x + step)] + [self._endToken] for x in range(0, len(curr_song), step)]
-        decoder_output = decoder_input
-
-        ## Pad input and output sequence to match the batch sequence length
-        encoder_input[-1]  += [self._padToken] * (step + 1 - len(encoder_input[-1]))
-        decoder_input[-1]  += [self._padToken] * (step + 1 - len(decoder_input[-1]))
-        decoder_output[-1] += [self._padToken] * (step + 1 - len(decoder_output[-1]))
-
-        song_sample_weight = [[     0 if x == self._padToken
-                               else 0 if x == self._startToken
-                               else 50 if x == self._endToken 
-                               else 10 if x == "<ENDLINE>" 
-                               else 1 for x in inp] 
-                            for inp in encoder_input]
-
-        return encoder_input, decoder_input, decoder_output, song_sample_weight
-
-    def _setClassWeight(self, vocab_size):
-        self._logger.debug("pinkySpeaker.lib.model.TfTransformer._setClassWeight()")
-        clw = {}
-        for i in range(vocab_size):
-            clw[i] = 1
-        clw[self.word2idx("<ENDLINE>")] = 50
-        return clw
-
-    ## Receive a word, return the index in the vocabulary
-    def word2idx(self, word):
-        self._logger.debug("pinkySpeaker.lib.model.TfTransformer.word2idx()")
-        return self._model['word_model'].wv.vocab[word].index
-    ## Receive a vocab index, return the workd
-    def idx2word(self, idx):
-        self._logger.debug("pinkySpeaker.lib.model.TfTransformer.idx2word()")
-        return self._model['word_model'].wv.index2word[idx]
-    ## Receive a vocab index, return its one hot vector
-    def idx2onehot(self, idx, size):
-        self._logger.debug("pinkySpeaker.lib.model.TfTransformer.idx2onehot()")
-        ret = np.zeros(size)
-        ret[idx] = 1000
-        return ret
-
-    ## Converts "<ENDLINE>" to '\n' for pretty printing
-    ## Also masks meta-tokens but throws a warning
-    def _prettyPrint(self, text):
-        self._logger.debug("pinkySpeaker.lib.model.TfTransformer._prettyPrint()")
-
-        if self._startToken in text:
-            self._logger.warning("</START> has been found to generated text!")
-        if self._padToken in text:
-            self._logger.warning("</PAD> has been found to generated text!")
-        if "<ENDLINE>" in text:
-            self._logger.warning("Endline found in text!")
-
-        return text.replace("<ENDLINE> ", "\n")
-
     ## Just fit it!
     def fit(self, epochs = 200, save_model = None):
         self._logger.debug("pinkySpeaker.lib.model.TfTransformer.fit()")
@@ -545,6 +334,20 @@ class TfTransformer:
 
         return
 
+    ## Converts "<ENDLINE>" to '\n' for pretty printing
+    ## Also masks meta-tokens but throws a warning
+    def _prettyPrint(self, text):
+        self._logger.debug("pinkySpeaker.lib.model.TfTransformer._prettyPrint()")
+
+        if self._startToken in text:
+            self._logger.warning("</START> has been found to generated text!")
+        if self._padToken in text:
+            self._logger.warning("</PAD> has been found to generated text!")
+        if "<ENDLINE>" in text:
+            self._logger.warning("Endline found in text!")
+
+        return text.replace("<ENDLINE> ", "\n")
+        
     ## Booting callback on title generation between epochs
     def _title_per_epoch(self, epoch, _):
         self._logger.debug("pinkySpeaker.lib.model.TfTransformer._title_per_epoch()")
