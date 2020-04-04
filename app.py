@@ -10,6 +10,8 @@ import sys
 from os import path as pt
 sys.path.append(pt.dirname("/home/fivosts/PhD/Code/eupy/eupy"))
 from eupy.native import logger as l
+from eupy.native import plotter as plt
+
 import argparse as arg
 import os
 
@@ -69,12 +71,19 @@ def main():
 		logger.info("Selected training of language model.")
 		artist_list = [os.path.join(args.datapath, x.lower()) for x in args.train]
 		dataset = dl.fetchData(artist_list, args.plot_samples)
-		model1 = MODEL_ZOO[args.model](data = dataset, LSTM_Depth = 8)
-		model2 = MODEL_ZOO[args.model](data = dataset, LSTM_Depth = 8)
+		model1 = MODEL_ZOO[args.model](data = dataset, num_layers = 4, d_model = 128, dff = 128, num_heads = 4)
+		model2 = MODEL_ZOO[args.model](data = dataset, num_layers = 2, d_model = 64, dff = 64, num_heads = 2)
 		# loss = model.fit(save_model = args.modelpath)
+        ylim = 0
 		for loss1, loss2 in zip(model1.fit(save_model = args.modelpath), model2.fit(save_model = args.modelpath)):
-			print(loss1)
-			print(loss2)
+            ylim = max(ylim, max(max(loss1), max(loss2)))
+            plt.linesSingleAxis({model1.properties: {'y': loss1}, model2.properties: {'y': loss2}}, 
+            					y_label = ("Loss", 13), 
+                                x_label = ("Epochs", 13), 
+                                vert_grid = True,
+                                plot_title = ("Loss over transformers", 18),
+                                y_lim = ylim + 0.1*ylim, x_lim = 200, 
+                                live = True)
 
 	else: ## args.mode == "gen"
 		model = MODEL_ZOO[args.model](model = args.modelpath)
