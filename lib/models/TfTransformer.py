@@ -226,7 +226,7 @@ class TfTransformer:
         return inp, tar
 
     ## Just fit it!
-    def fit(self, epochs = 200, live_plot = True, save_model = None):
+    def fit(self, epochs = 200, live_plot = False, save_model = None):
         self._logger.debug("pinkySpeaker.lib.model.TfTransformer.fit()")
 
         # checkpoint_path = "./checkpoints/train"
@@ -287,9 +287,12 @@ class TfTransformer:
                                                                 self._model['optimizer']['accuracy'].result())
                                                                 )
             self._logger.info('Time taken for 1 epoch: {} secs\n'.format(time.time() - start))
+
+            yield self._history.loss
+
         if live_plot:
             plt.show()
-        return 
+        return self._history
 
     @tf.function(input_signature = [tf.TensorSpec(shape = (None, None), dtype = tf.int64),
                                     tf.TensorSpec(shape = (None, None), dtype = tf.int64)]
