@@ -4,6 +4,7 @@ from os import path as pt
 from os import makedirs
 sys.path.append(pt.dirname("/home/fivosts/PhD/Code/eupy/eupy"))
 from eupy.native import logger as l
+from eupy.native import plotter as plt
 
 import numpy as np
 import gensim
@@ -453,13 +454,12 @@ class TfTransformer:
         # if ckpt_manager.latest_checkpoint:
         #     ckpt.restore(ckpt_manager.latest_checkpoint)
         #     print ('Latest checkpoint restored!!')
-        import matplotlib.pyplot as plt
-        fig, ax = plt.subplots()
-        ax.yaxis.grid(True)
-        ax.set_xlim([0, epochs])
         ylim = 0
-        stack = []
-        acc_stack = []
+        plotted_data = {
+            'loss': {'y': []},
+            'accuracy': {'y': []}
+        }
+
         for epoch in range(epochs):
             start = time.time()
             
@@ -475,14 +475,17 @@ class TfTransformer:
                                     self._model['optimizer']['accuracy'].result())
                                     )
 
-            stack.append(self._model['optimizer']['loss'].result().numpy())
-            acc_stack.append(5 * self._model['optimizer']['accuracy'].result().numpy())
+            plotted_data['loss']['y'].append(self._model['optimizer']['loss'].result().numpy())
+            plotted_data['accuracy']['y'].append(5 * self._model['optimizer']['accuracy'].result().numpy())
+
             ylim = max(ylim, self._model['optimizer']['loss'].result().numpy())
-            ax.set_ylim([0, ylim + 0.1*ylim])
-            # plt.scatter(epoch, self._model['optimizer']['loss'].result().numpy(), color='blue')
-            ax.plot(np.arange(epoch+1), stack, color = 'red')
-            ax.plot(np.arange(epoch+1), acc_stack, color = 'blue')
-            plt.pause(0.1)
+
+            plt.linesSingleAxis(plotted_data, y_label = ("Loss vs Accuracy", 13), 
+                                              x_label = ("Epochs", 13), 
+                                              vert_grid = True,
+                                              y_lim = ylim + 0.1*ylim, x_lim = epochs, 
+                                              live = True)
+
             # if (epoch + 1) % 5 == 0:
             #     ckpt_save_path = ckpt_manager.save()
             #     print ('Saving checkpoint for epoch {} at {}'.format(epoch+1, ckpt_save_path))
