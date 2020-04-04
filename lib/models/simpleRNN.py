@@ -5,6 +5,8 @@ from os import makedirs
 sys.path.append(pt.dirname("/home/fivosts/PhD/Code/eupy/eupy"))
 from eupy.native import logger as l
 
+from lib import history
+
 import numpy as np
 import gensim
 
@@ -23,32 +25,39 @@ class simpleRNN:
         self._logger = l.getLogger()
         self._logger.debug("pinkySpeaker.lib.model.simpleRNN.__init__()")
 
+        ## Model specs        
+        self._lyric_sequence_length = sequence_length
+        self._LSTM_depth = LSTM_Depth
+
         ## _dataset and _model are the two member variables of the class
         self._raw_data = data
         self._model = model
         self._dataset = None
 
-        self._lyric_sequence_length = 80
         self._maskToken = "</PAD>"
         self._startToken = "</START>"
         self._endToken = "</END>"
 
+        self._history = history.history("simpleRNN", LSTM_Depth = self._LSTM_depth,
+                                                     sequence_length = self._lyric_sequence_length
+                                                     )
+
         if data:
-            self._initArchitecture(data, LSTM_Depth)
+            self._initArchitecture(data)
         elif model:
             self._model = self._loadNNModel(model)
         self._logger.info("SimpleRNN model")
         return
 
-    def _initArchitecture(self, raw_data, LSTM_Depth):
+    def _initArchitecture(self, raw_data):
         self._logger.debug("pinkySpeaker.lib.model.simpleRNN._initArchitecture()")
 
-        vocab_size, max_title_length, all_titles_length, inp_sentences = self._initNNModel(raw_data, LSTM_Depth)
+        vocab_size, max_title_length, all_titles_length, inp_sentences = self._initNNModel(raw_data)
         self._initDataset(raw_data, vocab_size, max_title_length, all_titles_length, inp_sentences)
 
         return
 
-    def _initNNModel(self, raw_data, LSTM_Depth):
+    def _initNNModel(self, raw_data):
         self._logger.debug("pinkySpeaker.lib.model.simpleRNN._initNNModel()")
         self._logger.info("Initialize NN Model")
 
@@ -65,8 +74,8 @@ class simpleRNN:
 
         ## The order matters because of word2idx usage, therefore manual initialization here
         self._model['word_model'] = word_model
-        self._model['title_model'] = self._initTitleModel(pretrained_weights, LSTM_Depth)
-        self._model['lyric_model'] = self._initLyricModel(pretrained_weights, LSTM_Depth)
+        self._model['title_model'] = self._initTitleModel(pretrained_weights)
+        self._model['lyric_model'] = self._initLyricModel(pretrained_weights)
 
         self._logger.info("SimpleRNN Compiled successfully")
         return vocab_size, max_title_length, all_titles_length, inp_sent
@@ -104,14 +113,14 @@ class simpleRNN:
         self._logger.info("Word2Vec word model initialized")
         return wm
 
-    def _initTitleModel(self, weights, LSTM_Depth):
+    def _initTitleModel(self, weights):
         self._logger.debug("pinkySpeaker.lib.model.simpleRNN._initTitleModel()")
 
         vocab_size, embedding_size = weights.shape
         tm = Sequential()
         tm.add(Embedding(input_dim=vocab_size, output_dim=embedding_size, weights=[weights]))
         tm.add(Dropout(0.2))
-        for _ in range(LSTM_Depth - 1):
+        for _ in range(self._LSTM_depth - 1):
             tm.add(LSTM(units=embedding_size, return_sequences=True))
             tm.add(Dropout(0.2))
         tm.add(LSTM(units=2 * embedding_size, return_sequences=False))
@@ -124,7 +133,7 @@ class simpleRNN:
         self._logger.info(tm.summary())
         return tm
 
-    def _initLyricModel(self, weights, LSTM_Depth):
+    def _initLyricModel(self, weights):
         self._logger.debug("pinkySpeaker.lib.model.simpleRNN._initLyricModel()")
 
         vocab_size, embedding_size = weights.shape
@@ -133,7 +142,7 @@ class simpleRNN:
         # lm.add(Masking(mask_value = self.word2idx("<ENDLINE>"), input_shape = ([None])))
         lm.add(Embedding(input_dim=vocab_size, output_dim=embedding_size, trainable = False, weights=[weights]))
         lm.add(Dropout(0.2))
-        for _ in range(LSTM_Depth):
+        for _ in range(self._LSTM_depth):
             lm.add(LSTM(units=embedding_size, input_shape = (None, embedding_size), return_sequences=True))
             lm.add(Dropout(0.2))
         lm.add(TimeDistributed(Dense(units=vocab_size, activation = 'softmax')))
