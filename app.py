@@ -80,6 +80,7 @@ def main():
 			except KeyboardInterrupt:
 				logger.info("Terminating app...")
 
+	logger.info("Application terminated successfully")
 	logger.shutdown()
 	return
 
