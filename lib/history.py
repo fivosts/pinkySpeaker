@@ -8,11 +8,11 @@ from eupy.native import logger as l
 ## NN Training history object
 ## Keeps track of model type, model specs and loss, accuracy of trainig over epochs
 class history:
-    def __init__(self, model, **kwargs):
+    def __init__(self, modeltype, **kwargs):
         self._logger = l.getLogger()
         self._logger.debug("pinkySpeaker.lib.history.history.__init__()")
         self._modeltype = modeltype
-        self._kwargs = kwargs
+        self._kwargs = self._createProperty(kwargs)
         self._loss = []
         self._accuracy = []
         return
@@ -41,3 +41,8 @@ class history:
     def accuracy(self, accuracy_element):
         self._logger.debug("pinkySpeaker.lib.history.history.accuracy_setter()")
         self._accuracy.append(accuracy_element)
+
+    def _createProperty(self, props):
+        self._logger.debug("pinkySpeaker.lib.history.history._createProperty()")
+        print(props)
+        return

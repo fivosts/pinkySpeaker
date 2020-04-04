@@ -27,7 +27,7 @@ class TfTransformer:
 
         ## Training history object
         self._history = history.history("TfTransformer", num_layers = self._num_layers,
-                                                         d_model = self._dmodel,
+                                                         d_model = self._d_model,
                                                          dff = self._dff,
                                                          num_heads = self._num_heads,
                                         )
@@ -75,7 +75,7 @@ class TfTransformer:
                                                             target_vocab_size, 
                                                             dropout_rate
                                                             )
-        self._model['optimizer'] = self._setupOptimizer(d_model)
+        self._model['optimizer'] = self._setupOptimizer(self._d_model)
 
         self._logger.info("TfTransformer Assembled successfully")
         return
