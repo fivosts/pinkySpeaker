@@ -29,8 +29,9 @@ class simpleRNN:
         self._dataset = None
 
         self._lyric_sequence_length = 80
-        self._maskToken = "MASK_TOKEN"
-        self._startToken = "START_TOKEN"
+        self._maskToken = "</PAD>"
+        self._startToken = "</START>"
+        self._endToken = "</END>"
 
         if data:
             self._initArchitecture(data, LSTM_Depth)
@@ -252,7 +253,7 @@ class simpleRNN:
         song_spl_inp[-1] += [self._maskToken] * (self._lyric_sequence_length - len(song_spl_inp[-1]))
         song_spl_out[-1] += [self._maskToken] * (self._lyric_sequence_length - len(song_spl_out[-1]))
 
-        song_sample_weight = [[0 if x == self._maskToken else 50 if x == "endfile" else 50 if x == "<ENDLINE>" else 1 for x in inp] for inp in song_spl_inp]
+        song_sample_weight = [[0 if x == self._maskToken else 50 if x == self._endToken else 50 if x == "<ENDLINE>" else 1 for x in inp] for inp in song_spl_inp]
 
         return song_spl_inp, song_spl_out, song_sample_weight
 
@@ -285,11 +286,11 @@ class simpleRNN:
         self._logger.debug("pinkySpeaker.lib.model.simpleRNN._prettyPrint()")
 
         if self._startToken in text:
-            self._logger.warning("START_TOKEN has been found to generated text!")
+            self._logger.warning("</START> has been found to generated text!")
         elif self._maskToken in text:
-            self._logger.warning("MASK_TOKEN has been found to generated text!")
+            self._logger.warning("</PAD> has been found to generated text!")
 
-        return text.replace("<ENDLINE> ", "\n").replace("endfile", "\nEND")
+        return text.replace("<ENDLINE> ", "\n")
 
     ## Just fit it!
     def fit(self, epochs = 50, save_model = None):
@@ -386,7 +387,7 @@ class simpleRNN:
 
         word_idxs = [self.word2idx(word) for word in text.lower().split()]
         # init_<ENDLINE>_bias = model.layers[-2].weights[1][self.word2idx("<ENDLINE>")]
-        # init_endfile_bias = model.layers[-2].weights[1][self.word2idx("endfile")]
+        # init_endfile_bias = model.layers[-2].weights[1][self.word2idx(self._endToken)]
         for i in range(num_generated):
             prediction = model.predict(x=np.array(word_idxs))
             max_cl = 0
@@ -400,7 +401,7 @@ class simpleRNN:
             idx = self._sample(samples, temperature=0.7)
             word_idxs.append(idx)
 
-            if self.idx2word(idx) == "endfile" or (title and self.idx2word(idx) == "<ENDLINE>"):
+            if self.idx2word(idx) == self._endToken or (title and self.idx2word(idx) == "<ENDLINE>"):
                 break
 
         return ' '.join(self.idx2word(idx) for idx in word_idxs)
