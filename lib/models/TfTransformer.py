@@ -38,8 +38,6 @@ class TfTransformer:
         self._model = model
         self._dataset = None
 
-        self._lyric_sequence_length = sequence_length
-
         self._startToken = "</START>"
         self._endToken = "</END>" ## TODO
         self._padToken = "</PAD>"
@@ -83,8 +81,10 @@ class TfTransformer:
         else:
             num_heads = 2
 
-        if kwargs.any() not in accepted_args:
+        if any(key not in accepted_args for key in kwargs):
             raise ValueError("TfTransformer variable args provided are incorrect:\n".format(kwargs))
+
+        return num_layers, d_model, dff, num_heads
 
     ## Booting function of NN Model + dataset initialization
     def _initArchitecture(self, raw_data, batch_size):
