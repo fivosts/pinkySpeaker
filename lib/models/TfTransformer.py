@@ -272,7 +272,9 @@ class TfTransformer:
                 plt.linesSingleAxis(plotted_data, y_label = ("Loss vs Accuracy", 13), 
                                                   x_label = ("Epochs", 13), 
                                                   vert_grid = True,
-                                                  plot_title = self._history.modeltype + self._history.properties,
+                                                  plot_title = ("{} - {}".format(self._history.modeltype, 
+                                                                                self._history.properties
+                                                                                ), 18),
                                                   y_lim = ylim + 0.1*ylim, x_lim = epochs, 
                                                   live = True)
 
