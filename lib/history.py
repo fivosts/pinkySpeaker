@@ -44,5 +44,7 @@ class history:
 
     def _createProperty(self, props):
         self._logger.debug("pinkySpeaker.lib.history.history._createProperty()")
-        print(props)
-        return
+        str_prop = []
+        for p in props:
+            str_prop.append("{}_{}".format(str(p).replace("num", "#").replace("_", "")[:4], str(props[p])))
+        return "-".join(str_prop)
