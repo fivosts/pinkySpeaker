@@ -460,6 +460,8 @@ class TfTransformer:
             'accuracy': {'y': []}
         }
 
+        history = {'loss': [], 'accuracy'}
+
         for epoch in range(epochs):
             start = time.time()
             
@@ -477,6 +479,9 @@ class TfTransformer:
 
             plotted_data['loss']['y'].append(self._model['optimizer']['loss'].result().numpy())
             plotted_data['accuracy']['y'].append(5 * self._model['optimizer']['accuracy'].result().numpy())
+
+            history['loss'].append(self._model['optimizer']['loss'].result().numpy())
+            history['accuracy'].append(self._model['optimizer']['accuracy'].result().numpy())
 
             ylim = max(ylim, self._model['optimizer']['loss'].result().numpy())
 
