@@ -49,6 +49,11 @@ class simpleRNN:
         self._logger.info("SimpleRNN model")
         return
 
+    @property
+    def properties(self):
+        return self._history.properties
+    
+
     def _initArchitecture(self, raw_data):
         self._logger.debug("pinkySpeaker.lib.model.simpleRNN._initArchitecture()")
 
@@ -262,7 +267,7 @@ class simpleRNN:
         song_spl_inp[-1] += [self._maskToken] * (self._lyric_sequence_length - len(song_spl_inp[-1]))
         song_spl_out[-1] += [self._maskToken] * (self._lyric_sequence_length - len(song_spl_out[-1]))
 
-        song_sample_weight = [[0 if x == self._maskToken else 50 if x == self._endToken else 50 if x == "<ENDLINE>" else 1 for x in inp] for inp in song_spl_inp]
+        song_sample_weight = [[0 if x == self._maskToken else 200 if x == self._endToken else 100 if x == "<ENDLINE>" else 1 for x in inp] for inp in song_spl_inp]
 
         return song_spl_inp, song_spl_out, song_sample_weight
 
@@ -305,20 +310,24 @@ class simpleRNN:
     def fit(self, epochs = 50, save_model = None):
         self._logger.debug("pinkySpeaker.lib.model.simpleRNN.fit()")
 
-        title_hist = self._model['title_model'].fit(self._dataset['title_model']['input'], 
-                                                    self._dataset['title_model']['output'],
-                                                    batch_size = 4,
-                                                    epochs = epochs,
-                                                    class_weight = self._dataset['title_model']['class_weight'],
-                                                    callbacks = [LambdaCallback(on_epoch_end=self._title_per_epoch)] )
+        for ep in range(epochs):
 
-        lyric_hist = self._model['lyric_model'].fit(self._dataset['lyric_model']['input'],
-                                                    self._dataset['lyric_model']['output'],
-                                                    batch_size = 8,
-                                                    epochs = epochs,
-                                                    sample_weight = self._dataset['lyric_model']['sample_weight'],
-                                                    callbacks = [LambdaCallback(on_epoch_end=self._lyrics_per_epoch)] )
-       
+            title_hist = self._model['title_model'].fit(self._dataset['title_model']['input'], 
+                                                        self._dataset['title_model']['output'],
+                                                        batch_size = 8,
+                                                        # epochs = epochs,
+                                                        class_weight = self._dataset['title_model']['class_weight'],
+                                                        callbacks = [LambdaCallback(on_epoch_end=self._yield_loss)] )
+
+            lyric_hist = self._model['lyric_model'].fit(self._dataset['lyric_model']['input'],
+                                                        self._dataset['lyric_model']['output'],
+                                                        batch_size = 16,
+                                                        # epochs = epochs,
+                                                        sample_weight = self._dataset['lyric_model']['sample_weight'],
+                                                        callbacks = [LambdaCallback(on_epoch_end=self._yield_loss)] )
+            self._history.loss = 0.5 * (title_hist.history['loss'][-1] + lyric_hist.history['loss'][-1])
+            yield self._history.loss
+
         if save_model:
             save_model = pt.join(save_model, "simpleRNN")
             makedirs(save_model, exist_ok = True)
@@ -326,6 +335,10 @@ class simpleRNN:
             self._model['title_model'].save(pt.join(save_model, "title_model.h5"))
             self._model['lyric_model'].save(pt.join(save_model, "lyric_model.h5"))
         return [x + y for x, y in zip(title_hist.history['loss'], lyric_hist.history['loss'])]
+
+    def _yield_loss(self, epoch, loss):
+        print(loss)
+        yield loss
 
     ## Run a model prediction based on sample input
     def predict(self, seed, load_model = None):
