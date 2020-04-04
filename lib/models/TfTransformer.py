@@ -6,17 +6,9 @@ sys.path.append(pt.dirname("/home/fivosts/PhD/Code/eupy/eupy"))
 from eupy.native import logger as l
 from eupy.native import plotter as plt
 
+from lib import history
+
 import numpy as np
-import gensim
-
-from keras import backend as K
-from keras.models import Sequential, load_model
-from keras.callbacks import LambdaCallback
-from keras.layers.recurrent import LSTM
-from keras.layers.embeddings import Embedding
-from keras.layers import Dense, Activation, TimeDistributed, Dropout
-
-from keras_transformer import get_model, decode
 
 import tensorflow as tf
 import tensorflow_datasets as tfds
@@ -28,6 +20,17 @@ class TfTransformer:
         self._logger = l.getLogger()
         self._logger.debug("pinkySpeaker.lib.model.TfTransformer.__init__()")
 
+        self._num_layers = 2
+        self._d_model = 64
+        self._dff = 64
+        self._num_heads = 2
+
+        ## Training history object
+        self._history = history.history("TfTransformer", num_layers = self._num_layers,
+                                                         d_model = self._dmodel,
+                                                         dff = self._dff,
+                                                         num_heads = self._num_heads,
+                                        )
         ## _dataset and _model are the two member variables of the class
         self._raw_data = data
         self._model = model
@@ -59,21 +62,15 @@ class TfTransformer:
         self._logger.debug("pinkySpeaker.lib.model.TfTransformer._initNNModel()")
         self._logger.info("Initialize NN Model")
 
-        ## Temp specs. Those will be added as parameters
-        num_layers = 2
-        d_model = 64
-        dff = 64
-        num_heads = 2
-
         input_vocab_size = self._model['tokenizer'].vocab_size + 2
         target_vocab_size = self._model['tokenizer'].vocab_size + 2
         dropout_rate = 0.1
         ##
 
-        self._model['transformer'] = self._setupTransformer(num_layers,
-                                                            d_model, 
-                                                            dff, 
-                                                            num_heads, 
+        self._model['transformer'] = self._setupTransformer(self._num_layers,
+                                                            self._d_model, 
+                                                            self._dff, 
+                                                            self._num_heads, 
                                                             input_vocab_size, 
                                                             target_vocab_size, 
                                                             dropout_rate
@@ -460,8 +457,6 @@ class TfTransformer:
             'accuracy': {'y': []}
         }
 
-        history = {'loss': [], 'accuracy': []}
-
         for epoch in range(epochs):
             start = time.time()
             
@@ -487,8 +482,8 @@ class TfTransformer:
                                               y_lim = ylim + 0.1*ylim, x_lim = epochs, 
                                               live = True)
 
-            history['loss'].append(self._model['optimizer']['loss'].result().numpy())
-            history['accuracy'].append(self._model['optimizer']['accuracy'].result().numpy())
+            self._history.loss = self._model['optimizer']['loss'].result().numpy()
+            self._history.accuracy = self._model['optimizer']['accuracy'].result().numpy()
 
             # if (epoch + 1) % 5 == 0:
             #     ckpt_save_path = ckpt_manager.save()
