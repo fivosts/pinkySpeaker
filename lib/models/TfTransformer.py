@@ -278,8 +278,6 @@ class TfTransformer:
                                                   y_lim = ylim + 0.1*ylim, x_lim = epochs, 
                                                   live = True)
 
-
-
             # if (epoch + 1) % 5 == 0:
             #     ckpt_save_path = ckpt_manager.save()
             #     print ('Saving checkpoint for epoch {} at {}'.format(epoch+1, ckpt_save_path))
@@ -289,7 +287,8 @@ class TfTransformer:
                                                                 self._model['optimizer']['accuracy'].result())
                                                                 )
             self._logger.info('Time taken for 1 epoch: {} secs\n'.format(time.time() - start))
-
+        if live_plot:
+            plt.show()
         return 
 
     @tf.function(input_signature = [tf.TensorSpec(shape = (None, None), dtype = tf.int64),
