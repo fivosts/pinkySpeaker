@@ -226,7 +226,7 @@ class TfTransformer:
         return inp, tar
 
     ## Just fit it!
-    def fit(self, epochs = 200, save_model = None):
+    def fit(self, epochs = 200, live_plot = True, save_model = None):
         self._logger.debug("pinkySpeaker.lib.model.TfTransformer.fit()")
 
         # checkpoint_path = "./checkpoints/train"
@@ -240,11 +240,12 @@ class TfTransformer:
         # if ckpt_manager.latest_checkpoint:
         #     ckpt.restore(ckpt_manager.latest_checkpoint)
         #     print ('Latest checkpoint restored!!')
-        ylim = 0
-        plotted_data = {
-            'loss': {'y': []},
-            'accuracy': {'y': []}
-        }
+        if live_plot:
+            ylim = 0
+            plotted_data = {
+                'loss': {'y': []},
+                'accuracy': {'y': []}
+            }
 
         for epoch in range(epochs):
             start = time.time()
@@ -261,18 +262,21 @@ class TfTransformer:
                                     self._model['optimizer']['accuracy'].result())
                                     )
 
-            plotted_data['loss']['y'].append(self._model['optimizer']['loss'].result().numpy())
-            plotted_data['accuracy']['y'].append(5 * self._model['optimizer']['accuracy'].result().numpy())
-            ylim = max(ylim, self._model['optimizer']['loss'].result().numpy())
-
-            plt.linesSingleAxis(plotted_data, y_label = ("Loss vs Accuracy", 13), 
-                                              x_label = ("Epochs", 13), 
-                                              vert_grid = True,
-                                              y_lim = ylim + 0.1*ylim, x_lim = epochs, 
-                                              live = True)
-
             self._history.loss = self._model['optimizer']['loss'].result().numpy()
             self._history.accuracy = self._model['optimizer']['accuracy'].result().numpy()
+
+            if live_plot:
+                ylim = max(ylim, self._model['optimizer']['loss'].result().numpy())
+                plotted_data['loss']['y'] = self._history.loss
+                plotted_data['accuracy']['y'] = self._history.accuracy
+                plt.linesSingleAxis(plotted_data, y_label = ("Loss vs Accuracy", 13), 
+                                                  x_label = ("Epochs", 13), 
+                                                  vert_grid = True,
+                                                  plot_title = self._history.modeltype + self._history.properties,
+                                                  y_lim = ylim + 0.1*ylim, x_lim = epochs, 
+                                                  live = True)
+
+
 
             # if (epoch + 1) % 5 == 0:
             #     ckpt_save_path = ckpt_manager.save()
@@ -347,7 +351,7 @@ class TfTransformer:
             self._logger.warning("Endline found in text!")
 
         return text.replace("<ENDLINE> ", "\n")
-        
+
     ## Booting callback on title generation between epochs
     def _title_per_epoch(self, epoch, _):
         self._logger.debug("pinkySpeaker.lib.model.TfTransformer._title_per_epoch()")
