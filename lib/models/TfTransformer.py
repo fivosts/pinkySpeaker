@@ -16,7 +16,7 @@ import time
 
 class TfTransformer:
 
-    def __init__(self, data = None, model = None, batch_size = 4, LSTM_Depth = 3, sequence_length = 30):
+    def __init__(self, data = None, model = None, batch_size = 4, **kwargs):
         self._logger = l.getLogger()
         self._logger.debug("pinkySpeaker.lib.model.TfTransformer.__init__()")
 
@@ -24,6 +24,8 @@ class TfTransformer:
         self._d_model = 64
         self._dff = 64
         self._num_heads = 2
+
+        self._num_layers, self._d_model, self._dff, self._num_heads = self._parsekwArgs(kwargs)
 
         ## Training history object
         self._history = history.history("TfTransformer", num_layers = self._num_layers,
@@ -48,6 +50,41 @@ class TfTransformer:
             self._model = self._loadNNModel(model)
         self._logger.info("TfTransformer model")
         return
+
+    @property
+    def properties(self):
+        self._logger.debug("pinkySpeaker.lib.model.TfTransformer.properties()")        
+        return self._history.properties
+    
+    def _parsekwArgs(self, kwargs):
+        self._logger.debug("pinkySpeaker.lib.model.TfTransformer._parsekwArgs()")        
+
+        accepted_args = (
+                'num_layers',
+                'd_model',
+                'dff',
+                'num_heads'
+            )
+
+        if 'num_layers' in kwargs:
+            num_layers = kwargs['num_layers']
+        else:
+            num_layers = 2
+        if 'd_model' in kwargs:
+            d_model = kwargs['d_model']
+        else:
+            d_model = 64
+        if 'dff' in kwargs:
+            dff = kwargs['dff']
+        else:
+            dff = 64
+        if 'num_heads' in kwargs:
+            num_heads = kwargs['num_heads']
+        else:
+            num_heads = 2
+
+        if kwargs.any() not in accepted_args:
+            raise ValueError("TfTransformer variable args provided are incorrect:\n".format(kwargs))
 
     ## Booting function of NN Model + dataset initialization
     def _initArchitecture(self, raw_data, batch_size):
