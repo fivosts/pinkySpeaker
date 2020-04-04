@@ -69,8 +69,13 @@ def main():
 		logger.info("Selected training of language model.")
 		artist_list = [os.path.join(args.datapath, x.lower()) for x in args.train]
 		dataset = dl.fetchData(artist_list, args.plot_samples)
-		model = MODEL_ZOO[args.model](data = dataset, LSTM_Depth = 8)
-		loss = model.fit(save_model = args.modelpath)
+		model1 = MODEL_ZOO[args.model](data = dataset, LSTM_Depth = 8)
+		model2 = MODEL_ZOO[args.model](data = dataset, LSTM_Depth = 8)
+		# loss = model.fit(save_model = args.modelpath)
+		for loss1, loss2 in zip(model1.fit(save_model = args.modelpath), model2.fit(save_model = args.modelpath)):
+			print(loss1)
+			print(loss2)
+
 	else: ## args.mode == "gen"
 		model = MODEL_ZOO[args.model](model = args.modelpath)
 		while(True):
