@@ -12,7 +12,7 @@ class history:
         self._logger = l.getLogger()
         self._logger.debug("pinkySpeaker.lib.history.history.__init__()")
         self._modeltype = modeltype
-        self._kwargs = self._createProperty(kwargs)
+        self._properties = self._createProperty(kwargs)
         self._loss = []
         self._accuracy = []
         return
@@ -28,10 +28,15 @@ class history:
         return self._accuracy
     
     @property
+    def properties(self):
+        self._logger.debug("pinkySpeaker.lib.history.history.properties_property()")
+        return self._properties
+
+    @property
     def modeltype(self):
-        self._logger.debug("pinkySpeaker.lib.history.history.modeltype()")
+        self._logger.debug("pinkySpeaker.lib.history.history.modeltype_property()")
         return self._modeltype
-    
+
     @loss.setter
     def loss(self, loss_element):
         self._logger.debug("pinkySpeaker.lib.history.history.loss_setter()")
