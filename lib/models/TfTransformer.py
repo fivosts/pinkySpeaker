@@ -1,18 +1,17 @@
 #!/usr/bin/env python
-import sys
-from os import path as pt
-from os import makedirs
-sys.path.append(pt.dirname("/home/fivosts/PhD/Code/eupy/eupy"))
-from eupy.native import logger as l
-from eupy.native import plotter as plt
 
-from lib import history
-
+import time
 import numpy as np
-
 import tensorflow as tf
 import tensorflow_datasets as tfds
-import time
+
+from os import path, makedirs
+
+from eupy.native import logger as l
+from eupy.native import plotter as plt
+from lib import history
+
+
 
 class TfTransformer:
 
@@ -157,8 +156,8 @@ class TfTransformer:
     def _loadNNModel(self, modelpath):
         self._logger.debug("pinkySpeaker.lib.model.TfTransformer._loadNNModel()")
         ## TODO
-        return { 'word_model'   :   gensim.models.Word2Vec.load(pt.join(modelpath, "word_model.h5")),
-                 'lyric_model'  :   load_model(pt.join(modelpath, "lyric_model.h5"))
+        return { 'word_model'   :   gensim.models.Word2Vec.load(path.join(modelpath, "word_model.h5")),
+                 'lyric_model'  :   load_model(path.join(modelpath, "lyric_model.h5"))
                }
 
     ## Booting function of dataset creation.

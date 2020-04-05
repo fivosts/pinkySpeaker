@@ -1,9 +1,10 @@
 #!/usr/bin/env python
 
-import sys, os, re
+import re
 import collections
-from os import path as pt
-sys.path.append(pt.dirname("/home/fivosts/PhD/Code/eupy/eupy"))
+
+from os import path, listdir
+
 from eupy.mrcrawley import AZspider as cr
 from eupy.native import logger as l
 from eupy.native import plotter as plt
@@ -101,8 +102,8 @@ def readDataset(artist_path):
     l.getLogger().debug("pinkySpeaker.lib.dataloader.readDataset()")
 
     dataset = []
-    for file in os.listdir(artist_path):
-        file_path = pt.join(artist_path, file)
+    for file in listdir(artist_path):
+        file_path = path.join(artist_path, file)
         dataset.append(readFile(file_path))
     return dataset
 
@@ -113,7 +114,7 @@ def datasetExists(path, basename):
     l.getLogger().debug("pinkySpeaker.lib.dataloader.datasetExists()")
 
     l.getLogger().info("Check if {} dataset exists.".format(basename))
-    if not pt.isdir(path):
+    if not path.isdir(path):
         l.getLogger().warning("{} dataset does not exist.".format(basename))
         return False
     else:
@@ -142,7 +143,7 @@ def fetchData(artist_path_list, plot_sample):
     l.getLogger().info("Fetch data of artist list.")
     for artist_path in artist_path_list:
         l.getLogger().info(artist_path)
-        basename = pt.basename(artist_path)
+        basename = path.basename(artist_path)
         if not datasetExists(artist_path, basename):
             l.getLogger().info("Extract dataset for {}.".format(basename))      
             data = fetchArtist(basename)

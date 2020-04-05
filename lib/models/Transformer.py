@@ -1,13 +1,9 @@
 #!/usr/bin/env python
-import sys
-from os import path as pt
-from os import makedirs
-sys.path.append(pt.dirname("/home/fivosts/PhD/Code/eupy/eupy"))
-from eupy.native import logger as l
 
 import numpy as np
 import gensim
 
+from os import path, makedirs
 from keras import backend as K
 from keras.models import Sequential, load_model
 from keras.callbacks import LambdaCallback
@@ -15,7 +11,9 @@ from keras.layers.recurrent import LSTM
 from keras.layers.embeddings import Embedding
 from keras.layers import Dense, Activation, TimeDistributed, Dropout
 
+
 from keras_transformer import get_model, decode
+from eupy.native import logger as l
 
 class Transformer:
 
@@ -79,8 +77,8 @@ class Transformer:
     ## Loads a model from file.
     def _loadNNModel(self, modelpath):
 
-        return { 'word_model'   :   gensim.models.Word2Vec.load(pt.join(modelpath, "word_model.h5")),
-                 'lyric_model'  :   load_model(pt.join(modelpath, "lyric_model.h5"))
+        return { 'word_model'   :   gensim.models.Word2Vec.load(path.join(modelpath, "word_model.h5")),
+                 'lyric_model'  :   load_model(path.join(modelpath, "lyric_model.h5"))
                }
 
     ## Booting function of dataset creation.
@@ -352,9 +350,9 @@ class Transformer:
                                                callbacks = [LambdaCallback(on_epoch_end=self._lyrics_per_epoch)] )
        
         if save_model:
-            save_model = pt.join(save_model, "Transformer")
+            save_model = path.join(save_model, "Transformer")
             makedirs(save_model, exist_ok = True)
-            self._model['Transformer'].save(pt.join(save_model, "Transformer.h5"))
+            self._model['Transformer'].save(path.join(save_model, "Transformer.h5"))
         return hist.history['loss']
 
     ## Run a model prediction based on sample input
@@ -509,7 +507,7 @@ def runTransformer(raw_data):
     src_dataset = []
     random_lines = []
     for file in os.listdir(path):
-        with open(pt.join(path, file), 'r') as f:
+        with open(path.join(path, file), 'r') as f:
             lines = f.readlines()
             lines = [x.replace("\n", "") for x in lines if x.replace("\n", "") != ""]
             random_lines += lines
@@ -519,7 +517,7 @@ def runTransformer(raw_data):
         return example, random_lines[randint(0, len(random_lines) - 1)]
 
     for file in os.listdir(path):
-        line = tf.data.TextLineDataset(pt.join(path, file))
+        line = tf.data.TextLineDataset(path.join(path, file))
         labelled_line = line.map(lambda key: labeler(key))
         temp_dataset.append(labelled_line)
 
@@ -535,7 +533,7 @@ def runTransformer(raw_data):
                     (x.numpy() for sublist in temp_dataset for x, _ in sublist), target_vocab_size = 2**13)
 
     for file in os.listdir(path):
-        line = tf.data.TextLineDataset(pt.join(path, file))
+        line = tf.data.TextLineDataset(path.join(path, file))
         for l in line:
             if l.numpy().decode("utf-8")  != "":
                 # src_dataset.append(([tokenizer_en.vocab_size] + tokenizer_en.encode(l.numpy()) + [tokenizer_en.vocab_size + 1], [tokenizer_en.vocab_size] + tokenizer_en.encode("".join(random_lines[randint(0, len(random_lines) - 1)])) + [tokenizer_en.vocab_size + 1]))

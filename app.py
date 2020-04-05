@@ -6,9 +6,7 @@ This is the entry point of the application.
 """
 from lib import dataloader as dl
 from lib.models import simpleRNN, Transformer, TfTransformer
-import sys
-from os import path as pt
-sys.path.append(pt.dirname("/home/fivosts/PhD/Code/eupy/eupy"))
+
 from eupy.native import logger as l
 from eupy.native import plotter as plt
 

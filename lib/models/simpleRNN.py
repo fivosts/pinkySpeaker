@@ -1,14 +1,8 @@
 #!/usr/bin/env python
-import sys
-from os import path as pt
-from os import makedirs
-sys.path.append(pt.dirname("/home/fivosts/PhD/Code/eupy/eupy"))
-from eupy.native import logger as l
 
-from lib import history
-
-import numpy as np
 import gensim
+import numpy as np
+from os import path, makedirs
 
 from keras import backend as K
 from keras.models import Sequential, load_model
@@ -16,6 +10,9 @@ from keras.callbacks import LambdaCallback
 from keras.layers.recurrent import LSTM
 from keras.layers.embeddings import Embedding
 from keras.layers import Dense, Activation, TimeDistributed, Dropout
+
+from eupy.native import logger as l
+from lib import history
 
 class simpleRNN:
 
@@ -87,9 +84,9 @@ class simpleRNN:
 
     def _loadNNModel(self, modelpath):
 
-        return { 'word_model'   :   gensim.models.Word2Vec.load(pt.join(modelpath, "word_model.h5")),
-                 'title_model'  :   load_model(pt.join(modelpath, "title_model.h5")),
-                 'lyric_model'  :   load_model(pt.join(modelpath, "lyric_model.h5"))
+        return { 'word_model'   :   gensim.models.Word2Vec.load(path.join(modelpath, "word_model.h5")),
+                 'title_model'  :   load_model(path.join(modelpath, "title_model.h5")),
+                 'lyric_model'  :   load_model(path.join(modelpath, "lyric_model.h5"))
                }
 
     def _initDataset(self, raw_data, vocab_size, mx_t_l, all_t_l, inp_sent):
@@ -329,11 +326,11 @@ class simpleRNN:
             yield self._history.loss
 
         if save_model:
-            save_model = pt.join(save_model, "simpleRNN")
+            save_model = path.join(save_model, "simpleRNN")
             makedirs(save_model, exist_ok = True)
-            self._model['word_model'].save(pt.join(save_model, "word_model.h5"))
-            self._model['title_model'].save(pt.join(save_model, "title_model.h5"))
-            self._model['lyric_model'].save(pt.join(save_model, "lyric_model.h5"))
+            self._model['word_model'].save(path.join(save_model, "word_model.h5"))
+            self._model['title_model'].save(path.join(save_model, "title_model.h5"))
+            self._model['lyric_model'].save(path.join(save_model, "lyric_model.h5"))
         return [x + y for x, y in zip(title_hist.history['loss'], lyric_hist.history['loss'])]
 
     def _yield_loss(self, epoch, loss):
