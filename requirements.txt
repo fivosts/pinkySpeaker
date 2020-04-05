@@ -5,3 +5,4 @@ keras-transformer==0.32.0
 numpy>=1.18.1
 pip>=20.0.2
 tensorflow==2.1.0
+tensorflow-datasets==2.1.0
