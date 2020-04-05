@@ -74,13 +74,15 @@ def main():
         model1 = MODEL_ZOO[args.model](data = dataset, num_layers = 4, d_model = 128, dff = 128, num_heads = 4)
         model2 = MODEL_ZOO[args.model](data = dataset, num_layers = 2, d_model = 64, dff = 64, num_heads = 2)
         model3 = MODEL_ZOO[args.model](data = dataset, num_layers = 1, d_model = 32, dff = 32, num_heads = 1)
+        model4 = MODEL_ZOO['simpleRNN'](data = dataset, LSTM_Depth = 8, sequence_length = 320)
         # loss = model.fit(save_model = args.modelpath)
         ylim = 0
-        for loss1, loss2, loss3 in zip(model1.fit(), model2.fit(), model3.fit()):
-            ylim = max(ylim, max(max(loss1), max(loss2), max(loss3)))
+        for loss1, loss2, loss3, loss4 in zip(model1.fit(), model2.fit(), model3.fit(), model4.fit(epochs = 200)):
+            ylim = max(ylim, max(max(loss1), max(loss2), max(loss3), max(loss4)))
             plt.linesSingleAxis({model1.properties: {'y': loss1}, 
                                 model2.properties: {'y': loss2}, 
-                                model3.properties: {'y': loss3}
+                                model3.properties: {'y': loss3},
+                                model4.properties: {'y': loss4},
                                 }, 
                                 y_label = ("Loss", 13), 
                                 x_label = ("Epochs", 13), 
