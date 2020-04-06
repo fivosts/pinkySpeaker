@@ -75,7 +75,7 @@ def main():
         model4 = MODEL_ZOO['simpleRNN'](data = dataset, LSTM_Depth = 8, sequence_length = 320)
         # loss = model.fit(save_model = args.modelpath)
         ylim = 0
-        for loss1, loss2, loss3, loss4 in zip(model1.fit(), model2.fit(), model3.fit(), model4.fit(epochs = 200)):
+        for loss1, loss2, loss3, loss4 in zip(model1.fit(epochs = 2), model2.fit(epochs = 2), model3.fit(epochs = 2), model4.fit(epochs = 2)):
             ylim = max(ylim, max(max(loss1), max(loss2), max(loss3), max(loss4)))
             plt.linesSingleAxis({model1.properties: {'y': loss1}, 
                                 model2.properties: {'y': loss2}, 
