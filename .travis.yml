@@ -1,0 +1,47 @@
+language: python
+python: 
+  - "2.7"
+  - "3.4"
+  - "3.5"
+  - "3.6"      # current default Python on Travis CI
+  - "3.7"
+  - "3.8"
+  - "3.8-dev"  # 3.8 development branch
+  - "nightly"  # nightly build
+
+os: linux
+dist: 
+  - bionic  # 18.04
+  - xenial  # 16.04
+  - trusty  # 14.04
+  - precise # 12.04
+
+install: 
+  - python -m pip install -r requirements.txt
+
+before_script:
+    - python --version
+
+script:
+  - ./TfTransformer.sh
+
+# matrix:
+#   include:
+#     - compiler: gcc
+#       addons:
+#         apt:
+#           sourceline: "ppa:ubuntu-toolchain-r/test"
+#           packages: ['g++-7',]
+#       env:
+#         - CC=gcc-7
+#         - CXX=g++-7
+
+#     - compiler: gcc
+#       addons:
+#         apt:
+#           sourceline: "ppa:ubuntu-toolchain-r/test"
+#           packages: ['g++-8',]
+#       env:
+#         - CC=gcc-8
+#         - CXX=g++-8
+
