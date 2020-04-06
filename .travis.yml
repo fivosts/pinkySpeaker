@@ -9,12 +9,18 @@ python:
   - "3.8-dev"  # 3.8 development branch
   - "nightly"  # nightly build
 
-os: linux
-dist: 
-  - bionic  # 18.04
-  - xenial  # 16.04
-  - trusty  # 14.04
-  - precise # 12.04
+include:
+  - os: linux
+    dist: bionic  # 18.04
+
+  - os: linux
+    dist: xenial  # 16.04
+
+  - os: linux
+    dist: trusty  # 14.04
+
+  - os: linux
+    dist: precise # 12.04
 
 install: 
   - python -m pip install -r requirements.txt
