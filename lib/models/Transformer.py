@@ -16,7 +16,8 @@ from keras_transformer import get_model, decode
 from eupy.native import logger as l
 
 class Transformer:
-
+    ## Model is based on 
+    ## "https://www.tensorflow.org/tutorials/text/transformer"
     _logger = None
 
     def __init__(self, data = None, model = None, LSTM_Depth = 3, sequence_length = 30):
